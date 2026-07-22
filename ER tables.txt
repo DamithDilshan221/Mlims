@@ -1,0 +1,268 @@
+erDiagram
+    %% MODULE 1: System Security & Access Control
+    roles {
+        int role_id PK
+        varchar role_name UK
+        varchar description
+    }
+    users {
+        int user_id PK
+        int role_id FK
+        varchar username UK
+        varchar password_hash
+        boolean is_active
+        timestamp last_login
+    }
+    staff {
+        int staff_id PK
+        int user_id FK "UK"
+        varchar first_name
+        varchar last_name
+        varchar designation
+        varchar contact_no
+        varchar slmc_reg_no UK
+    }
+    audit_logs {
+        bigint log_id PK
+        int user_id FK
+        varchar table_name
+        int record_id
+        varchar action_type
+        timestamp changed_at
+        jsonb old_payload
+        jsonb new_payload
+    }
+    notifications {
+        int notification_id PK
+        int user_id FK
+        varchar subject
+        text message
+        date due_date
+        boolean is_read
+    }
+
+    %% MODULE 2: Master & Lookup Data
+    police_stations {
+        int station_id PK
+        varchar station_name UK
+        varchar area
+        varchar contact_no
+    }
+    courts {
+        int court_id PK
+        varchar court_name UK
+        varchar court_type
+        varchar location
+    }
+    injury_types {
+        int injury_type_id PK
+        varchar name UK
+    }
+    weapon_types {
+        int weapon_type_id PK
+        varchar name UK
+    }
+    specimen_types {
+        int specimen_type_id PK
+        varchar name UK
+    }
+
+    %% MODULE 3: Core Cases & Patient Demographics
+    patients {
+        int patient_id PK
+        varchar full_name
+        date dob
+        int age
+        char gender
+        text address
+        varchar nic_passport UK
+        varchar thumb_imprint
+    }
+    forensic_cases {
+        int case_id PK
+        int patient_id FK
+        int station_id FK
+        varchar case_number UK
+        varchar case_type
+        date incident_date
+        varchar incident_location
+        varchar status
+    }
+    digital_assets {
+        int asset_id PK
+        int case_id FK
+        varchar file_name
+        varchar file_uri
+        varchar file_type
+        timestamp upload_date
+    }
+
+    %% MODULE 4: Clinical Forensic Component
+    clinical_examinations {
+        int mlef_id PK
+        int case_id FK "UK"
+        int doctor_id FK
+        date exam_date
+        time exam_time
+        varchar ward
+        varchar bht_no
+        date discharge_date
+        boolean patient_consent
+        text brief_history
+        varchar alcohol_influence
+        varchar drug_influence
+        boolean sexual_assault
+    }
+    medical_referrals {
+        int referral_id PK
+        int mlef_id FK
+        varchar specialty
+        date referral_date
+        text review_notes
+    }
+    medico_legal_reports {
+        int mlr_id PK
+        int mlef_id FK "UK"
+        int court_id FK
+        varchar court_case_no
+        varchar serial_no UK
+        date trial_date
+        date issue_date
+        text final_opinion
+        boolean is_grievous_311
+    }
+
+    %% MODULE 5: Autopsy Component
+    postmortem_examinations {
+        int pmr_id PK
+        int case_id FK "UK"
+        int doctor_id FK
+        varchar inquest_no
+        varchar ordered_by
+        date date_of_pm
+        time time_of_pm
+        date date_of_death
+        varchar place_of_death
+        varchar manner_of_death
+        varchar rigor_mortis
+        varchar hypostasis
+        varchar putrefaction
+        jsonb anatomical_notes
+    }
+    causes_of_death {
+        int cod_id PK
+        int pmr_id FK "UK"
+        text immediate_cause
+        text antecedent_cause
+        text contributory
+        boolean under_investigation
+    }
+    deceased_identifications {
+        int identification_id PK
+        int pmr_id FK
+        varchar identifier_name
+        text identifier_address
+        varchar relationship
+        varchar nic
+    }
+
+    %% MODULE 6: Injuries Mapping (Junction)
+    exam_injuries {
+        bigint exam_injury_id PK
+        int mlef_id FK
+        int pmr_id FK
+        int injury_type_id FK
+        int weapon_type_id FK
+        varchar body_part
+        varchar size_and_shape
+        varchar category_of_hurt
+        boolean endangers_life
+    }
+
+    %% MODULE 7: Evidence, Laboratories & Chain of Custody
+    specimens {
+        int specimen_id PK
+        int case_id FK
+        int specimen_type_id FK
+        varchar barcode_id UK
+        varchar quantity
+        timestamp collection_date
+        varchar current_location
+    }
+    chain_of_custody {
+        bigint custody_id PK
+        int specimen_id FK
+        int transferred_by FK
+        varchar transferred_to
+        timestamp transfer_date
+        varchar purpose
+        varchar receipt_uri
+    }
+    lab_requests {
+        int request_id PK
+        int specimen_id FK
+        varchar request_type
+        date request_date
+        varchar govt_analyst_ref
+        text clinical_notes
+        varchar status
+    }
+    lab_results {
+        int result_id PK
+        int request_id FK "UK"
+        text findings
+        text diagnosis
+        date received_date
+        varchar document_uri
+    }
+
+    %% MODULE 8: Legal Acknowledgments
+    court_receipts {
+        int receipt_id PK
+        int mlr_id FK "UK"
+        int pmr_id FK "UK"
+        int court_id FK
+        date trial_date
+        date received_date
+        varchar registrar_sign
+    }
+
+    %% RELATIONSHIPS
+    roles ||--o{ users : "assigns"
+    users ||--|| staff : "has profile"
+    users ||--o{ audit_logs : "generates"
+    users ||--o{ notifications : "receives"
+    
+    patients ||--o{ forensic_cases : "involved in"
+    police_stations ||--o{ forensic_cases : "reports"
+    forensic_cases ||--o{ digital_assets : "contains"
+    
+    forensic_cases ||--o| clinical_examinations : "resolves to"
+    forensic_cases ||--o| postmortem_examinations : "resolves to"
+    
+    staff ||--o{ clinical_examinations : "conducts"
+    staff ||--o{ postmortem_examinations : "conducts"
+    
+    clinical_examinations ||--o{ medical_referrals : "requires"
+    clinical_examinations ||--|| medico_legal_reports : "generates"
+    courts ||--o{ medico_legal_reports : "receives"
+    
+    postmortem_examinations ||--|| causes_of_death : "determines"
+    postmortem_examinations ||--o{ deceased_identifications : "identified by"
+    
+    clinical_examinations ||--o{ exam_injuries : "documents"
+    postmortem_examinations ||--o{ exam_injuries : "documents"
+    injury_types ||--o{ exam_injuries : "categorizes"
+    weapon_types ||--o{ exam_injuries : "inflicted by"
+    
+    forensic_cases ||--o{ specimens : "yields"
+    specimen_types ||--o{ specimens : "classifies"
+    specimens ||--o{ chain_of_custody : "tracked via"
+    staff ||--o{ chain_of_custody : "transfers"
+    
+    specimens ||--o{ lab_requests : "sent for"
+    lab_requests ||--|| lab_results : "yields"
+    
+    medico_legal_reports ||--o| court_receipts : "acknowledged by"
+    postmortem_examinations ||--o| court_receipts : "acknowledged by"
+    courts ||--o{ court_receipts : "issues"

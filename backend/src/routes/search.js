@@ -1,0 +1,85 @@
+// ============================================================================
+// MLIMS — Search Routes
+// ============================================================================
+
+const express = require('express');
+const authenticate = require('../middleware/authenticate');
+const { validateQuery } = require('../middleware/validate');
+const { getPool } = require('../db/pools');
+const { withClient } = require('../db/transaction');
+const { computeSearchHash, decrypt } = require('../utils/encryption');
+const { z } = require('zod');
+const { sanitizedString } = require('../validators/commonSchemas');
+
+const router = express.Router();
+router.use(authenticate);
+
+const searchQuerySchema = z.object({
+  q: sanitizedString.min(3),
+  type: z.enum(['case', 'patient', 'specimen']),
+});
+
+/**
+ * GET /search
+ * Unified search endpoint routing to different entities based on type.
+ * Access control is delegated to the role's database pool.
+ */
+router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    const { q, type } = req.query;
+
+    await withClient(pool, async (client) => {
+      let results = [];
+
+      if (type === 'case') {
+        // Search by case number (exact or prefix)
+        const { rows } = await client.query(
+          `SELECT case_id, case_number, status, case_type 
+           FROM forensic_cases 
+           WHERE case_number ILIKE $1`,
+          [`${q}%`]
+        );
+        results = rows;
+      } 
+      else if (type === 'patient') {
+        // Search by NIC using deterministic HMAC
+        const nicHash = computeSearchHash(q);
+        
+        // Use the appropriate view based on role
+        const view = ['auditor', 'police', 'court'].includes(req.user.role_name) 
+          ? 'v_patient_public' 
+          : 'v_patient_full';
+          
+        const { rows } = await client.query(
+          `SELECT * FROM ${view} WHERE nic_search_hash = $1`,
+          [nicHash]
+        );
+        
+        results = rows.map(p => {
+          if (p.nic_passport_enc) {
+            p.nic_passport = decrypt(p.nic_passport_enc);
+            delete p.nic_passport_enc;
+          }
+          return p;
+        });
+      } 
+      else if (type === 'specimen') {
+        // Search by barcode
+        const { rows } = await client.query(
+          `SELECT specimen_id, barcode_id, current_location 
+           FROM specimens 
+           WHERE barcode_id = $1`,
+          [q]
+        );
+        results = rows;
+      }
+
+      res.json(results);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
