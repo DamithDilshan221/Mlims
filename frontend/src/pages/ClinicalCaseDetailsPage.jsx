@@ -251,23 +251,7 @@ const ClinicalCaseDetailsPage = () => {
           </div>
 
           {/* MLEF Creation Form (doctors only, no exam exists) — Comprehensive */}
-   
           {!exam && isDoctor && (
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
-              <h3 className="text-amber-800 font-bold mb-2">Examination Not Initiated</h3>
-              <p className="text-amber-700 text-sm mb-4">A doctor has not yet created the medical examination file for this case.</p>
-              {user.role === 'admin' || user.role === 'doctor' ? (
-                <button 
-                  onClick={initiateExam}
-                  className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm"
-                >
-                  Initiate Examination Now
-                </button>
-              ) : null}
-            </div>
-          ) : (
-
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-blue-50 px-6 py-4 border-b border-blue-200">
                 <h3 className="font-semibold text-blue-900 flex items-center">
@@ -276,52 +260,23 @@ const ClinicalCaseDetailsPage = () => {
                 </h3>
               </div>
               <form onSubmit={createMLEF} className="p-6 space-y-6">
-
-                {/* Section 1: Header & Administrative Metadata */}
+                {/* Section 1 */}
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setExpandedSections(prev => ({...prev, section1: !prev.section1}))}
                     className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-bold text-slate-800">
-                    <span>1. Header & Administrative Metadata</span>
+                    <span>1. Header &amp; Administrative Metadata</span>
                     <span className="text-slate-400">{expandedSections.section1 ? '▲' : '▼'}</span>
                   </button>
                   {expandedSections.section1 && (
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Exam Date *</label>
-                          <input type="date" required value={mlefForm.examDate}
-                            onChange={e => setMlefForm({...mlefForm, examDate: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-blue-500" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Exam Time</label>
-                          <input type="time" value={mlefForm.examTime}
-                            onChange={e => setMlefForm({...mlefForm, examTime: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-blue-500" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Ward</label>
-                          <input type="text" placeholder="e.g. Ward 3A" value={mlefForm.ward}
-                            onChange={e => setMlefForm({...mlefForm, ward: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">BHT No</label>
-                          <input type="text" placeholder="Bed Head Ticket number" value={mlefForm.bhtNo}
-                            onChange={e => setMlefForm({...mlefForm, bhtNo: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Discharge Date</label>
-                          <input type="date" value={mlefForm.dischargeDate}
-                            onChange={e => setMlefForm({...mlefForm, dischargeDate: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Authorization Type</label>
-                          <select value={mlefForm.authorizationType}
-                            onChange={e => setMlefForm({...mlefForm, authorizationType: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded">
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Exam Date *</label><input type="date" required value={mlefForm.examDate} onChange={e => setMlefForm({...mlefForm, examDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-blue-500" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Exam Time</label><input type="time" value={mlefForm.examTime} onChange={e => setMlefForm({...mlefForm, examTime: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-blue-500" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Ward</label><input type="text" placeholder="e.g. Ward 3A" value={mlefForm.ward} onChange={e => setMlefForm({...mlefForm, ward: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">BHT No</label><input type="text" placeholder="Bed Head Ticket number" value={mlefForm.bhtNo} onChange={e => setMlefForm({...mlefForm, bhtNo: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Discharge Date</label><input type="date" value={mlefForm.dischargeDate} onChange={e => setMlefForm({...mlefForm, dischargeDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Authorization Type</label>
+                          <select value={mlefForm.authorizationType} onChange={e => setMlefForm({...mlefForm, authorizationType: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded">
                             <option value="">Select...</option>
                             <option value="hospital_police">Hospital Police</option>
                             <option value="police_station">Police Station</option>
@@ -329,51 +284,25 @@ const ClinicalCaseDetailsPage = () => {
                             <option value="court_order">Court Order</option>
                           </select>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">MLEF Serial No</label>
-                          <input type="text" placeholder="MLEF serial number" value={mlefForm.mlefSerialNo}
-                            onChange={e => setMlefForm({...mlefForm, mlefSerialNo: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Court Case No</label>
-                          <input type="text" placeholder="Court case/code number" value={mlefForm.courtCaseNo}
-                            onChange={e => setMlefForm({...mlefForm, courtCaseNo: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">MLEF Serial No</label><input type="text" placeholder="MLEF serial number" value={mlefForm.mlefSerialNo} onChange={e => setMlefForm({...mlefForm, mlefSerialNo: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Court Case No</label><input type="text" placeholder="Court case/code number" value={mlefForm.courtCaseNo} onChange={e => setMlefForm({...mlefForm, courtCaseNo: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
                       </div>
                       <div className="border-t border-slate-200 pt-4">
                         <p className="text-xs font-semibold text-slate-600 mb-3">Police Officer Information</p>
                         <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1">Officer Name</label>
-                            <input type="text" placeholder="Name" value={mlefForm.officerName}
-                              onChange={e => setMlefForm({...mlefForm, officerName: e.target.value})}
-                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1">Rank</label>
-                            <input type="text" placeholder="Rank" value={mlefForm.officerRank}
-                              onChange={e => setMlefForm({...mlefForm, officerRank: e.target.value})}
-                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1">Badge No</label>
-                            <input type="text" placeholder="Badge number" value={mlefForm.officerBadgeNo}
-                              onChange={e => setMlefForm({...mlefForm, officerBadgeNo: e.target.value})}
-                              className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                          </div>
+                          <div><label className="block text-xs font-medium text-slate-700 mb-1">Officer Name</label><input type="text" placeholder="Name" value={mlefForm.officerName} onChange={e => setMlefForm({...mlefForm, officerName: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                          <div><label className="block text-xs font-medium text-slate-700 mb-1">Rank</label><input type="text" placeholder="Rank" value={mlefForm.officerRank} onChange={e => setMlefForm({...mlefForm, officerRank: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                          <div><label className="block text-xs font-medium text-slate-700 mb-1">Badge No</label><input type="text" placeholder="Badge number" value={mlefForm.officerBadgeNo} onChange={e => setMlefForm({...mlefForm, officerBadgeNo: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* Section 2: Referral & Legal Context */}
+                {/* Section 2 */}
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setExpandedSections(prev => ({...prev, section2: !prev.section2}))}
                     className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-bold text-slate-800">
-                    <span>2. Referral & Legal Context</span>
+                    <span>2. Referral &amp; Legal Context</span>
                     <span className="text-slate-400">{expandedSections.section2 ? '▲' : '▼'}</span>
                   </button>
                   {expandedSections.section2 && (
@@ -381,74 +310,22 @@ const ClinicalCaseDetailsPage = () => {
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-2">Referral Category</label>
                         <div className="grid grid-cols-2 gap-3">
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="trauma" checked={mlefForm.referralCategory === 'trauma'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Trauma</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="domestic_abuse" checked={mlefForm.referralCategory === 'domestic_abuse'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Domestic Abuse</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="sexual_abuse" checked={mlefForm.referralCategory === 'sexual_abuse'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Sexual Abuse</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="child_abuse" checked={mlefForm.referralCategory === 'child_abuse'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Child Abuse</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="detainee" checked={mlefForm.referralCategory === 'detainee'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Detainee</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="drug_addiction" checked={mlefForm.referralCategory === 'drug_addiction'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Drug Addiction</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="age_estimation" checked={mlefForm.referralCategory === 'age_estimation'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Age Estimation</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="dna_sample" checked={mlefForm.referralCategory === 'dna_sample'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">DNA Sample Collection</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
-                            <input type="radio" name="referralCategory" value="other" checked={mlefForm.referralCategory === 'other'}
-                              onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})}
-                              className="accent-blue-600" />
-                            <span className="text-sm text-slate-700">Other</span>
-                          </label>
+                          {[{v:'trauma',l:'Trauma'},{v:'domestic_abuse',l:'Domestic Abuse'},{v:'sexual_abuse',l:'Sexual Abuse'},{v:'child_abuse',l:'Child Abuse'},{v:'detainee',l:'Detainee'},{v:'drug_addiction',l:'Drug Addiction'},{v:'age_estimation',l:'Age Estimation'},{v:'dna_sample',l:'DNA Sample'},{v:'other',l:'Other'}].map(o =>
+                            <label key={o.v} className="flex items-center space-x-2 p-2 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer">
+                              <input type="radio" name="referralCategory" value={o.v} checked={mlefForm.referralCategory === o.v} onChange={e => setMlefForm({...mlefForm, referralCategory: e.target.value})} className="accent-blue-600" />
+                              <span className="text-sm text-slate-700">{o.l}</span>
+                            </label>
+                          )}
                         </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Brief History</label>
-                        <textarea rows="3" value={mlefForm.briefHistory}
-                          onChange={e => setMlefForm({...mlefForm, briefHistory: e.target.value})}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
-                          placeholder="Patient history, circumstances of injury..." />
+                        <textarea rows="3" value={mlefForm.briefHistory} onChange={e => setMlefForm({...mlefForm, briefHistory: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" placeholder="Patient history, circumstances of injury..." />
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* Section 3: Physical Examination & Injury Mapping */}
+                {/* Section 3 */}
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setExpandedSections(prev => ({...prev, section3: !prev.section3}))}
                     className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-bold text-slate-800">
@@ -458,61 +335,19 @@ const ClinicalCaseDetailsPage = () => {
                   {expandedSections.section3 && (
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Alcohol Influence</label>
-                          <input type="text" placeholder="e.g. Positive, Negative" value={mlefForm.alcoholInfluence}
-                            onChange={e => setMlefForm({...mlefForm, alcoholInfluence: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Drug Influence</label>
-                          <input type="text" placeholder="e.g. Positive, Negative" value={mlefForm.drugInfluence}
-                            onChange={e => setMlefForm({...mlefForm, drugInfluence: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Alcohol Influence</label><input type="text" placeholder="e.g. Positive, Negative" value={mlefForm.alcoholInfluence} onChange={e => setMlefForm({...mlefForm, alcoholInfluence: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Drug Influence</label><input type="text" placeholder="e.g. Positive, Negative" value={mlefForm.drugInfluence} onChange={e => setMlefForm({...mlefForm, drugInfluence: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
                       </div>
                       <div className="flex space-x-6">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={mlefForm.patientConsent}
-                            onChange={e => setMlefForm({...mlefForm, patientConsent: e.target.checked})}
-                            className="rounded border-slate-300" />
-                          <span className="text-sm text-slate-700">Patient Consent Obtained</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={mlefForm.sexualAssault}
-                            onChange={e => setMlefForm({...mlefForm, sexualAssault: e.target.checked})}
-                            className="rounded border-slate-300" />
-                          <span className="text-sm text-slate-700">Sexual Assault Suspected</span>
-                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer"><input type="checkbox" checked={mlefForm.patientConsent} onChange={e => setMlefForm({...mlefForm, patientConsent: e.target.checked})} className="rounded border-slate-300" /><span className="text-sm text-slate-700">Patient Consent Obtained</span></label>
+                        <label className="flex items-center space-x-2 cursor-pointer"><input type="checkbox" checked={mlefForm.sexualAssault} onChange={e => setMlefForm({...mlefForm, sexualAssault: e.target.checked})} className="rounded border-slate-300" /><span className="text-sm text-slate-700">Sexual Assault Suspected</span></label>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Identification Marks</label>
-                        <textarea rows="2" value={mlefForm.identificationMarks}
-                          onChange={e => setMlefForm({...mlefForm, identificationMarks: e.target.value})}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
-                          placeholder="Tattoos, scars, or other distinct visual markers" />
-                      </div>
+                      <div><label className="block text-xs font-medium text-slate-700 mb-1">Identification Marks</label><textarea rows="2" value={mlefForm.identificationMarks} onChange={e => setMlefForm({...mlefForm, identificationMarks: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" placeholder="Tattoos, scars, or other distinct visual markers" /></div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Left Thumb Impression</label>
-                          <input type="text" placeholder="URI / reference" value={mlefForm.thumbImpressionLeft}
-                            onChange={e => setMlefForm({...mlefForm, thumbImpressionLeft: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-slate-700 mb-1">Right Thumb Impression</label>
-                          <input type="text" placeholder="URI / reference" value={mlefForm.thumbImpressionRight}
-                            onChange={e => setMlefForm({...mlefForm, thumbImpressionRight: e.target.value})}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded" />
-                        </div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Left Thumb Impression</label><input type="text" placeholder="URI / reference" value={mlefForm.thumbImpressionLeft} onChange={e => setMlefForm({...mlefForm, thumbImpressionLeft: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
+                        <div><label className="block text-xs font-medium text-slate-700 mb-1">Right Thumb Impression</label><input type="text" placeholder="URI / reference" value={mlefForm.thumbImpressionRight} onChange={e => setMlefForm({...mlefForm, thumbImpressionRight: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" /></div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Medical Officer's Notes</label>
-                        <textarea rows="3" value={mlefForm.medicalOfficerNotes}
-                          onChange={e => setMlefForm({...mlefForm, medicalOfficerNotes: e.target.value})}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
-                          placeholder="Clinical observations recorded at the time of examination" />
-                      </div>
+                      <div><label className="block text-xs font-medium text-slate-700 mb-1">Medical Officer's Notes</label><textarea rows="3" value={mlefForm.medicalOfficerNotes} onChange={e => setMlefForm({...mlefForm, medicalOfficerNotes: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" placeholder="Clinical observations recorded at the time of examination" /></div>
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                         <p className="font-medium mb-1">Injury Mapping</p>
                         <p className="text-blue-600">After saving the MLEF, use the <strong>"Add Injury"</strong> button above to map injuries on anatomical diagrams with full details (nature, dimensions, anatomical site).</p>
@@ -520,8 +355,7 @@ const ClinicalCaseDetailsPage = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Section 4: Investigations & Referrals */}
+                {/* Section 4 */}
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setExpandedSections(prev => ({...prev, section4: !prev.section4}))}
                     className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-bold text-slate-800">
@@ -530,29 +364,16 @@ const ClinicalCaseDetailsPage = () => {
                   </button>
                   {expandedSections.section4 && (
                     <div className="p-4 space-y-4">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Special Investigations</label>
-                        <textarea rows="3" value={mlefForm.investigationsNotes}
-                          onChange={e => setMlefForm({...mlefForm, investigationsNotes: e.target.value})}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
-                          placeholder="X-ray/CT scan findings, blood/urine toxicology, swab test results..." />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Follow-up Review Notes</label>
-                        <textarea rows="2" value={mlefForm.followUpNotes}
-                          onChange={e => setMlefForm({...mlefForm, followUpNotes: e.target.value})}
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
-                          placeholder="Inward or outpatient review progress notes" />
-                      </div>
+                      <div><label className="block text-xs font-medium text-slate-700 mb-1">Special Investigations</label><textarea rows="3" value={mlefForm.investigationsNotes} onChange={e => setMlefForm({...mlefForm, investigationsNotes: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" placeholder="X-ray/CT scan findings, blood/urine toxicology, swab test results..." /></div>
+                      <div><label className="block text-xs font-medium text-slate-700 mb-1">Follow-up Review Notes</label><textarea rows="2" value={mlefForm.followUpNotes} onChange={e => setMlefForm({...mlefForm, followUpNotes: e.target.value})} className="w-full px-3 py-2 text-sm border border-slate-300 rounded" placeholder="Inward or outpatient review progress notes" /></div>
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                         <p className="font-medium mb-1">Specialist Referrals</p>
-                        <p className="text-blue-600">After saving the MLEF, use the <strong>"Medical Referrals"</strong> section below to add specialist referrals (Psychiatry, Pediatrics, OB/GYN, etc.).</p>
+                        <p className="text-blue-600">After saving the MLEF, use the <strong>"Medical Referrals"</strong> section to add specialist referrals.</p>
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* Section 5: Required Storage Data */}
+                {/* Section 5 */}
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <button type="button" onClick={() => setExpandedSections(prev => ({...prev, section5: !prev.section5}))}
                     className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-bold text-slate-800">
@@ -562,30 +383,17 @@ const ClinicalCaseDetailsPage = () => {
                   {expandedSections.section5 && (
                     <div className="p-4 space-y-3">
                       <p className="text-xs text-slate-500">Mark which documents have been received/stored for this case.</p>
-                      {[
-                        { key: 'hasDoctorCopy', label: 'Doctor\'s Copy of completed MLEF' },
-                        { key: 'hasInjuryPhotos', label: 'Clinical Injury Photographs' },
-                        { key: 'hasInvestigationFindings', label: 'Investigation Findings & Imaging' },
-                        { key: 'hasExternalReports', label: 'External Referral Reports' },
-                        { key: 'hasCourtSummons', label: 'Court Summons / Request Forms' },
-                        { key: 'hasMlrCopy', label: 'Copy of Generated Medico-Legal Report (MLR)' },
-                        { key: 'hasCertificateOfReceipt', label: 'Certificate of Receipt (signed/sealed)' },
-                      ].map(item => (
-                        <label key={item.key} className="flex items-center space-x-3 p-2 border border-slate-100 rounded hover:bg-slate-50 cursor-pointer">
-                          <input type="checkbox" checked={mlefForm[item.key]}
-                            onChange={e => setMlefForm({...mlefForm, [item.key]: e.target.checked})}
-                            className="rounded border-slate-300 accent-blue-600" />
-                          <span className="text-sm text-slate-700">{item.label}</span>
+                      {[{k:'hasDoctorCopy',l:'Doctor\'s Copy of completed MLEF'},{k:'hasInjuryPhotos',l:'Clinical Injury Photographs'},{k:'hasInvestigationFindings',l:'Investigation Findings & Imaging'},{k:'hasExternalReports',l:'External Referral Reports'},{k:'hasCourtSummons',l:'Court Summons / Request Forms'},{k:'hasMlrCopy',l:'Copy of Generated Medico-Legal Report (MLR)'},{k:'hasCertificateOfReceipt',l:'Certificate of Receipt (signed/sealed)'}].map(item =>
+                        <label key={item.k} className="flex items-center space-x-3 p-2 border border-slate-100 rounded hover:bg-slate-50 cursor-pointer">
+                          <input type="checkbox" checked={mlefForm[item.k]} onChange={e => setMlefForm({...mlefForm, [item.k]: e.target.checked})} className="rounded border-slate-300 accent-blue-600" />
+                          <span className="text-sm text-slate-700">{item.l}</span>
                         </label>
-                      ))}
+                      )}
                     </div>
                   )}
                 </div>
-
-                {/* Submit */}
                 <div className="pt-2 flex justify-end border-t border-slate-200">
-                  <button type="submit" disabled={creating}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors disabled:opacity-50">
+                  <button type="submit" disabled={creating} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors disabled:opacity-50">
                     {creating ? 'Creating MLEF...' : 'Create MLEF Report'}
                   </button>
                 </div>
