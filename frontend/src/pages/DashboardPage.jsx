@@ -189,7 +189,7 @@ const DashboardPage = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-8">
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                   <h3 className="font-semibold text-slate-800 flex items-center">
@@ -216,57 +216,6 @@ const DashboardPage = () => {
                               <p className="text-xs text-slate-500 mt-0.5">{c.station_name} • {new Date(c.incident_date).toLocaleDateString('en-GB')}</p>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-800 flex items-center">
-                    <FlaskConical className="w-5 h-5 mr-2 text-indigo-500" />
-                    My Lab Requests
-                  </h3>
-                  <button onClick={() => setShowLabModal(true)} className="text-xs text-indigo-600 hover:underline font-medium flex items-center">
-                    <Plus className="w-3 h-3 mr-1" /> New
-                  </button>
-                </div>
-                <div className="divide-y divide-slate-100 h-[320px] overflow-y-auto">
-                  {labRequests.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-sm">No pending lab requests.</div>
-                  ) : (
-                    labRequests.map((r) => (
-                      <div key={r.request_id} className="p-5 hover:bg-slate-50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-3">
-                            <FlaskConical className={clsx("w-5 h-5 mt-0.5", r.status === 'completed' ? 'text-green-500' : 'text-indigo-400')} />
-                            <div>
-                              <p className="text-sm font-medium text-slate-800">
-                                {r.request_type} <span className="text-xs text-slate-500 font-normal">({r.specimen_type_name})</span>
-                              </p>
-                              <p className="text-xs text-slate-500 mt-0.5">Case: {r.case_number} • {new Date(r.request_date).toLocaleDateString('en-GB')}</p>
-                              
-                              {r.status === 'completed' && r.document_uri && (
-                                <a 
-                                  href={`http://localhost:3000/api${r.document_uri}`} 
-                                  target="_blank" 
-                                  rel="noreferrer"
-                                  className="mt-2 inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                                >
-                                  <Download className="w-3 h-3 mr-1" /> Download Report
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                          <span className={clsx("text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
-                            r.status === 'completed' ? 'bg-green-100 text-green-700' :
-                            r.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                            'bg-amber-100 text-amber-700'
-                          )}>
-                            {r.status.replace(/_/g, ' ')}
-                          </span>
                         </div>
                       </div>
                     ))
@@ -301,10 +250,6 @@ const DashboardPage = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/cases/new" className="flex items-center justify-between w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
-                    <span><Plus className="w-4 h-4 inline mr-2" /> New MLEF</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
                   <Link to="/pm-registry" className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium">
                     <span><Plus className="w-4 h-4 inline mr-2" /> New Inquest</span>
                     <ChevronRight className="w-4 h-4" />

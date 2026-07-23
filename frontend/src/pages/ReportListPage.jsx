@@ -37,6 +37,7 @@ const ReportListPage = () => {
   // but for simplicity in this UI prototype we assume the API joins this data: 
   // report_issue_date, and receipt_id)
   const getClinicalStatus = (exam) => {
+    if (!exam.mlef_id) return { label: 'Pending Exam', color: 'bg-red-100 text-red-700' };
     if (exam.receipt_id) return { label: 'Acknowledged', color: 'bg-indigo-100 text-indigo-700' };
     if (exam.report_issue_date) return { label: 'Issued', color: 'bg-green-100 text-green-700' };
     return { label: 'Draft', color: 'bg-amber-100 text-amber-700' };
@@ -44,6 +45,7 @@ const ReportListPage = () => {
 
   // Compute status for Postmortem
   const getPostmortemStatus = (exam) => {
+    if (!exam.pmr_id) return { label: 'Pending Exam', color: 'bg-red-100 text-red-700' };
     if (exam.receipt_id) return { label: 'Acknowledged', color: 'bg-indigo-100 text-indigo-700' };
     if (exam.has_causes_of_death) return { label: 'Ready', color: 'bg-green-100 text-green-700' };
     return { label: 'In Progress', color: 'bg-amber-100 text-amber-700' };
@@ -101,6 +103,10 @@ const ReportListPage = () => {
                   {user.role === 'court' && isCourtActionable(status.label) ? (
                     <Link to={`/reports/generate/${type}/${id}`} className="text-indigo-600 hover:text-indigo-800 font-bold text-xs uppercase tracking-wide">
                       Acknowledge (Receipt)
+                    </Link>
+                  ) : !id ? (
+                    <Link to={`/cases/${type}/${item.case_id}`} className="text-amber-600 hover:text-amber-800 font-bold text-xs uppercase tracking-wide">
+                      Begin Exam
                     </Link>
                   ) : (
                     <Link to={`/reports/generate/${type}/${id}`} className="text-primary-600 hover:text-primary-800 font-medium text-xs uppercase tracking-wide">
