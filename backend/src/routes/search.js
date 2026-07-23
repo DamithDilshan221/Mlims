@@ -33,28 +33,34 @@ router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
       let results = [];
 
       if (type === 'case') {
-        // Search by case number (exact or prefix)
         const { rows } = await client.query(
           `SELECT case_id, case_number, status, case_type 
            FROM forensic_cases 
            WHERE case_number ILIKE $1`,
-          [`${q}%`]
+          [`%${q}%`]
         );
         results = rows;
       } 
       else if (type === 'patient') {
-        // Search by NIC using deterministic HMAC
         const nicHash = computeSearchHash(q);
         
-        // Use the appropriate view based on role
         const view = ['auditor', 'police', 'court'].includes(req.user.role_name) 
           ? 'v_patient_public' 
           : 'v_patient_full';
           
-        const { rows } = await client.query(
+        let { rows } = await client.query(
           `SELECT * FROM ${view} WHERE nic_search_hash = $1`,
           [nicHash]
         );
+        
+        // Fallback to name search when NIC hash finds nothing (full view only)
+        if (rows.length === 0 && view === 'v_patient_full') {
+          const { rows: nameRows } = await client.query(
+            `SELECT * FROM ${view} WHERE full_name ILIKE $1`,
+            [`%${q}%`]
+          );
+          rows = nameRows;
+        }
         
         results = rows.map(p => {
           if (p.nic_passport_enc) {
@@ -65,12 +71,11 @@ router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
         });
       } 
       else if (type === 'specimen') {
-        // Search by barcode
         const { rows } = await client.query(
           `SELECT specimen_id, barcode_id, current_location 
            FROM specimens 
-           WHERE barcode_id = $1`,
-          [q]
+           WHERE barcode_id ILIKE $1`,
+          [`%${q}%`]
         );
         results = rows;
       }
