@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
-import { UploadCloud, File, Image as ImageIcon, X } from 'lucide-react';
+import { UploadCloud, File, X } from 'lucide-react';
 
 const DocumentUploadPage = () => {
   const { id: caseId } = useParams();
@@ -47,12 +47,12 @@ const DocumentUploadPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Client-side extension validation (mirroring backend rules)
-    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'docx'];
+    // Client-side extension validation for PDF uploads only.
+    const allowedExtensions = ['pdf'];
     const ext = file.name.split('.').pop().toLowerCase();
     
     if (!allowedExtensions.includes(ext)) {
-      toast.error("Invalid file type. Allowed: PDF, JPG, PNG, DOCX.");
+      toast.error("Invalid file type. Allowed: PDF only.");
       return;
     }
 
@@ -86,7 +86,7 @@ const DocumentUploadPage = () => {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Digital Assets & Documents</h2>
+          <h2 className="text-2xl font-bold text-slate-800">PDF Documents</h2>
           <p className="text-slate-500 text-sm mt-1">Case #{caseId}</p>
         </div>
         
@@ -96,12 +96,12 @@ const DocumentUploadPage = () => {
               {uploading ? (
                 <span className="animate-pulse">Uploading...</span>
               ) : (
-                <>
-                  <UploadCloud className="w-4 h-4 mr-2" />
-                  Upload Document
-                </>
+                  <>
+                    <UploadCloud className="w-4 h-4 mr-2" />
+                    Upload PDF
+                  </>
               )}
-              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={handleFileUpload} disabled={uploading} />
+              <input type="file" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={uploading} />
             </label>
           </div>
         )}
@@ -113,7 +113,7 @@ const DocumentUploadPage = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
           <File className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-700">No documents found</h3>
-          <p className="text-sm text-slate-500 mt-1">There are no digital assets attached to this case.</p>
+          <p className="text-sm text-slate-500 mt-1">There are no PDF documents attached to this case.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -139,8 +139,8 @@ const DocumentUploadPage = () => {
                   Download
                 </a>
                 
-                {/* Preview is only for pdf and images */}
-                {['pdf', 'jpg', 'jpeg', 'png'].includes(doc.file_name.split('.').pop().toLowerCase()) && (
+                {/* Preview is available for PDF files. */}
+                {doc.file_name.split('.').pop().toLowerCase() === 'pdf' && (
                   <button 
                     onClick={() => setPreviewDoc(doc)}
                     className="text-xs font-bold text-primary-600 hover:text-primary-800"
@@ -164,7 +164,7 @@ const DocumentUploadPage = () => {
             </button>
           </div>
           <div className="flex-1 bg-slate-100 rounded-b-xl overflow-hidden relative">
-            {/* The backend explicitly sends Content-Type. For images/PDFs, iframe handles it securely without HTML execution. */}
+            {/* The backend explicitly sends Content-Type. PDF preview is rendered in an iframe. */}
             <iframe 
               src={`/api/digital-assets/${previewDoc.asset_id}/content`} 
               className="w-full h-full border-0"

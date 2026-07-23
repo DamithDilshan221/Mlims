@@ -27,3 +27,46 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400;
 }
+
+/* ── Print Styles (FR-PDF-2.1) ───────────────────────────────────────────── */
+@media print {
+  /* Hide sidebar */
+  .min-h-screen > aside,
+  aside[class*="sidebar"] { display: none !important; }
+
+  /* Hide top header bar */
+  .min-h-screen main > header { display: none !important; }
+
+  /* Hide all interactive/no-print elements */
+  .no-print { display: none !important; }
+
+  /* Make main content full-width */
+  .min-h-screen main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .min-h-screen main > div {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Remove shadows/borders for clean print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure white backgrounds */
+  body, .bg-slate-50, .bg-white, [class*="bg-"] {
+    background: #fff !important;
+  }
+
+  /* Break pages safely */
+  .page-break { page-break-before: always; }
+
+  /* Table improvements for print */
+  table, .overflow-x-auto { overflow: visible !important; }
+  th, td { page-break-inside: avoid; }
+}

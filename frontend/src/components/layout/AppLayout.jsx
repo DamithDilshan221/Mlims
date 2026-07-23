@@ -7,7 +7,9 @@ import {
   UserCog, ShieldCheck, BarChart3, Settings, BookOpen,
   ClipboardList, Skull, Gavel, Menu, X, ChevronDown, ChevronRight,
   Stethoscope, Microscope, Scale, Library, Bell, Shield,
-  AlertTriangle, Upload, Plus
+
+  AlertTriangle, Upload, CalendarDays, PieChart, Plus
+
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -51,6 +53,18 @@ const NAV_SECTIONS = [
       { label: 'Summons Register', path: '/court/summons', icon: Scale },
       { label: 'Trial Calendar', path: '/court/trials', icon: Gavel },
       { label: 'Directories', path: '/directories', icon: Building2 },
+    ],
+  },
+  {
+    label: 'Reports',
+    roles: ['admin', 'doctor', 'auditor', 'police', 'court'],
+    items: [
+      { label: 'Report Hub', path: '/reports/dashboard', icon: FileText },
+      { label: 'Daily Case Report', path: '/reports/daily', icon: CalendarDays },
+      { label: 'Monthly Report', path: '/reports/monthly', icon: BarChart3 },
+      { label: 'Pending Tracker', path: '/reports/pending', icon: AlertTriangle },
+      { label: 'Court Report', path: '/reports/court', icon: Scale },
+      { label: 'Statistical', path: '/reports/statistical', icon: PieChart },
     ],
   },
   {
