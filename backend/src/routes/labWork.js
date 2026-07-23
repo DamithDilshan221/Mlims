@@ -19,8 +19,20 @@ const router = express.Router();
 router.use(authenticate);
 
 /**
- * GET /lab-requests
+ * GET /lab-requests  and  /lab-requests/requests
  */
+router.get('/', validateQuery(labRequestQuerySchema), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const requests = await repo.listRequests(client, req.query);
+      res.json(requests);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
@@ -36,6 +48,19 @@ router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, n
 /**
  * GET /lab-requests/:id
  */
+router.get('/:id', validateParams(idParam), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const request = await repo.getRequestById(client, req.params.id);
+      if (!request) return res.status(404).json({ error: 'Request not found' });
+      res.json(request);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/requests/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
@@ -52,7 +77,19 @@ router.get('/requests/:id', validateParams(idParam), async (req, res, next) => {
 /**
  * POST /lab-requests
  */
-router.post('/requests', requireRole('admin', 'forensic_staff'), validateBody(labRequestSchema), async (req, res, next) => {
+router.post('/', requireRole('admin', 'forensic_staff', 'doctor'), validateBody(labRequestSchema), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const reqRecord = await repo.createRequest(client, req.body);
+      res.status(201).json(reqRecord);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/requests', requireRole('admin', 'forensic_staff', 'doctor'), validateBody(labRequestSchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
@@ -65,8 +102,21 @@ router.post('/requests', requireRole('admin', 'forensic_staff'), validateBody(la
 });
 
 /**
- * PATCH /lab-requests/:id/status
+ * PATCH /lab-requests/:id/status  and /lab-requests/requests/:id/status
  */
+router.patch('/:id/status', requireRole('admin', 'forensic_staff'), validateParams(idParam), validateBody(labRequestStatusSchema), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const updated = await repo.updateRequestStatus(client, req.params.id, req.body.status);
+      if (!updated) return res.status(404).json({ error: 'Request not found' });
+      res.json(updated);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.patch('/requests/:id/status', requireRole('admin', 'forensic_staff'), validateParams(idParam), validateBody(labRequestStatusSchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
