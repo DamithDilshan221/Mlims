@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, Users, FileText, FlaskConical, 
   ShieldAlert, LogOut, Search, Building2, FileCheck,
-  UserCog, ShieldCheck, BarChart3, Settings
+  UserCog, ShieldCheck, BarChart3, Settings, BookOpen
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -20,6 +20,7 @@ const AppLayout = ({ children }) => {
     { label: 'Reports', path: '/reports', icon: FileCheck },
     { label: 'Directories', path: '/directories', icon: Building2 },
     { label: 'Search', path: '/search', icon: Search },
+    { label: 'PM Registry', path: '/pm-registry', icon: BookOpen, roles: ['admin', 'doctor', 'police', 'court'] },
     { label: 'Staff & Users', path: '/users', icon: UserCog, roles: ['admin'] },
     { label: 'Audit Log', path: '/audit-log', icon: ShieldCheck, roles: ['admin', 'auditor'] },
     { label: 'Statistics', path: '/statistics', icon: BarChart3, roles: ['admin', 'auditor'] },

@@ -53,14 +53,14 @@ async function create(client, data) {
     `INSERT INTO clinical_examinations
        (case_id, doctor_id, exam_date, exam_time, ward, bht_no,
         discharge_date, patient_consent, brief_history,
-        alcohol_influence, drug_influence, sexual_assault)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        alcohol_influence, drug_influence, sexual_assault, authorization_type)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
       data.caseId, data.doctorId, data.examDate, data.examTime,
       data.ward, data.bhtNo, data.dischargeDate, data.patientConsent,
       data.briefHistory, data.alcoholInfluence, data.drugInfluence,
-      data.sexualAssault,
+      data.sexualAssault, data.authorizationType,
     ]
   );
   return rows[0];
@@ -78,13 +78,15 @@ async function update(client, mlefId, data) {
             brief_history = COALESCE($8, brief_history),
             alcohol_influence = COALESCE($9, alcohol_influence),
             drug_influence = COALESCE($10, drug_influence),
-            sexual_assault = COALESCE($11, sexual_assault)
+            sexual_assault = COALESCE($11, sexual_assault),
+            authorization_type = COALESCE($12, authorization_type)
      WHERE  mlef_id = $1
      RETURNING *`,
     [
       mlefId, data.examDate, data.examTime, data.ward, data.bhtNo,
       data.dischargeDate, data.patientConsent, data.briefHistory,
       data.alcoholInfluence, data.drugInfluence, data.sexualAssault,
+      data.authorizationType,
     ]
   );
   return rows[0] || null;

@@ -17,6 +17,7 @@ const clinicalExamSchema = z.object({
   alcoholInfluence: sanitizedString.max(100).optional().nullable(),
   drugInfluence: sanitizedString.max(100).optional().nullable(),
   sexualAssault: z.boolean(),
+  authorizationType: z.enum(['hospital_police', 'police_station', 'request_letter', 'court_order']).optional().nullable(),
 });
 
 const clinicalExamUpdateSchema = clinicalExamSchema.omit({ caseId: true }).partial();

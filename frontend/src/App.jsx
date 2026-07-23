@@ -30,6 +30,7 @@ import UserManagementPage from './pages/UserManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
 import StatisticsPage from './pages/StatisticsPage';
 import BackupSettingsPage from './pages/BackupSettingsPage';
+import PMRegistryPage from './pages/PMRegistryPage';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -98,6 +99,7 @@ function App() {
       <Route path="/audit-log" element={<ProtectedRoute allowedRoles={['admin', 'auditor']}><AuditLogPage /></ProtectedRoute>} />
       <Route path="/statistics" element={<ProtectedRoute allowedRoles={['admin', 'auditor']}><StatisticsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><BackupSettingsPage /></ProtectedRoute>} />
+      <Route path="/pm-registry" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'police', 'court']}><PMRegistryPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

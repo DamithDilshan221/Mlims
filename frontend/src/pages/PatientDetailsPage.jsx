@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
-import { User, Activity, MapPin, Hash, FileText } from 'lucide-react';
+
 import { useAuth } from '../context/AuthContext';
+import { User, Activity, MapPin, Hash, FileText, ClipboardList, FileSignature } from 'lucide-react';
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
@@ -11,6 +12,7 @@ const PatientDetailsPage = () => {
   const [patient, setPatient] = useState(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const canHandleClinicalForms = ['admin', 'doctor'].includes(user?.role);
 
   useEffect(() => {
     Promise.all([
@@ -91,6 +93,24 @@ const PatientDetailsPage = () => {
                     {c.case_number}
                   </Link>
                   <p className="text-xs text-slate-500 mt-0.5 capitalize">Type: {c.case_type} • Location: {c.incident_location || 'N/A'}</p>
+                  {c.case_type === 'clinical' && canHandleClinicalForms && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        to={`/cases/clinical/${c.case_id}`}
+                        className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-100"
+                      >
+                        <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
+                        Open MLEF
+                      </Link>
+                      <Link
+                        to={`/reports/generate/clinical/${c.case_id}`}
+                        className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700"
+                      >
+                        <FileSignature className="w-3.5 h-3.5 mr-1.5" />
+                        Fill MRF
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
                   {c.status}
