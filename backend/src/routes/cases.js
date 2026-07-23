@@ -70,10 +70,10 @@ router.get('/:id/timeline', validateParams(idParam), async (req, res, next) => {
 router.post('/', requireRole('admin', 'records_clerk', 'police'), validateBody(registerCaseSchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    const { patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId } = req.body;
+    const { patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId, doctorId } = req.body;
     
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
-      const result = await repo.registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId);
+      const result = await repo.registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId, doctorId);
       
       // Fetch the full case to return
       const newCase = await repo.getById(client, result.p_case_id);

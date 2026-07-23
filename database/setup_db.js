@@ -74,7 +74,14 @@ async function main() {
     'V7__auth_migration.sql',
     'V8__reporting_views.sql',
     'V9__add_totp_secret.sql',
-    'V10__fix_audit_logs.sql'
+    'V10__fix_audit_logs.sql',
+    'V12__add_referral_source.sql',
+    'V13__add_pm_authorization_type.sql',
+    'V13__police_copy_function.sql',
+    'V14__clinical_auth_pm_registry_court_summons.sql',
+    'V15__add_assigned_doctor_to_case.sql',
+    'V16__catchup_missing_migrations.sql',
+    'V17__fix_sp_register_case_permissions.sql'
   ];
 
   for (const file of migrationFiles) {

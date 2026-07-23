@@ -24,12 +24,36 @@ const LOOKUP_TABLES = [
 ];
 
 /**
+ * GET /lookups/doctors
+ * Returns staff members with doctor role for assignment dropdowns.
+ * MUST be defined before /:table so Express matches this exact path first.
+ */
+router.get('/doctors', async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const { rows } = await client.query(
+        `SELECT s.staff_id, s.first_name, s.last_name, s.designation, s.slmc_reg_no
+         FROM   staff s
+         JOIN   users u ON s.user_id = u.user_id
+         WHERE  u.role_id = (SELECT role_id FROM roles WHERE role_name = 'doctor')
+           AND  u.is_active = true
+         ORDER BY s.first_name`
+      );
+      res.json(rows);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /lookups/:table
  * Read-only access for all authenticated users.
  */
 router.get('/:table', async (req, res, next) => {
   try {
-    const table = req.params.table.replace(/-/g, '_'); // map url slug to table name
+    const table = req.params.table.replace(/-/g, '_');
     if (!LOOKUP_TABLES.includes(table)) {
       return res.status(404).json({ error: 'Lookup table not found.' });
     }

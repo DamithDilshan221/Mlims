@@ -9,10 +9,11 @@
 
 async function getMLRById(client, mlrId) {
   const { rows } = await client.query(
-    `SELECT mlr.*, c.court_name, ce.case_id
+    `SELECT mlr.*, c.court_name, ce.case_id, s.first_name || ' ' || s.last_name AS doctor_name
      FROM   medico_legal_reports mlr
      JOIN   courts c ON mlr.court_id = c.court_id
      JOIN   clinical_examinations ce ON mlr.mlef_id = ce.mlef_id
+     JOIN   staff s ON ce.doctor_id = s.staff_id
      WHERE  mlr.mlr_id = $1`,
     [mlrId]
   );
@@ -20,13 +21,15 @@ async function getMLRById(client, mlrId) {
 }
 
 async function getMLRByExamId(client, mlefId) {
-  const { rows } = await client.query(
-    `SELECT mlr.*, c.court_name
-     FROM   medico_legal_reports mlr
-     JOIN   courts c ON mlr.court_id = c.court_id
-     WHERE  mlr.mlef_id = $1`,
-    [mlefId]
-  );
+    const { rows } = await client.query(
+      `SELECT mlr.*, c.court_name, s.first_name || ' ' || s.last_name AS doctor_name
+       FROM   medico_legal_reports mlr
+       JOIN   courts c ON mlr.court_id = c.court_id
+       JOIN   clinical_examinations ce ON mlr.mlef_id = ce.mlef_id
+       JOIN   staff s ON ce.doctor_id = s.staff_id
+       WHERE  mlr.mlef_id = $1`,
+      [mlefId]
+    );
   return rows[0] || null;
 }
 
