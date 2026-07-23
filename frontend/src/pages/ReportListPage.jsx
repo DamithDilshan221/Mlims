@@ -87,9 +87,14 @@ const ReportListPage = () => {
                 </td>
                 <td className="px-6 py-4">{date ? new Date(date).toLocaleDateString() : '--'}</td>
                 <td className="px-6 py-4">
-                  <span className={clsx("inline-flex items-center px-2 py-1 rounded-full text-xs font-bold", status.color)}>
+                  <span className={clsx("inline-flex items-center px-2 py-1 rounded-full text-xs font-bold mr-2", status.color)}>
                     {status.label}
                   </span>
+                  {type === 'clinical' && item.police_copy_issued && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                      Police Copy
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right">
                   {/* Action varies: Court Official issues receipt, Doctor edits/prints */}

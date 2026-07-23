@@ -31,7 +31,7 @@ const parentQuery = z.object({
 router.get('/', validateQuery(parentQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const injuries = await repo.getByExamId(client, req.query);
       res.json(injuries);
     });

@@ -7,30 +7,37 @@ const CaseRegistrationPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [stations, setStations] = useState([]);
+  const [referralSources, setReferralSources] = useState([]);
   
   const [formData, setFormData] = useState({
     patientId: '',
     stationId: '',
+    referralSourceId: '',
     caseType: 'clinical',
     incidentDate: '',
     incidentLocation: ''
   });
 
   useEffect(() => {
-    api.get('/lookups/police_stations')
-      .then(res => {
-        setStations(res.data);
-        if (res.data.length > 0) {
-          setFormData(prev => ({ ...prev, stationId: res.data[0].station_id }));
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      api.get('/lookups/police_stations'),
+      api.get('/lookups/referral_sources')
+    ]).then(([stationsRes, sourcesRes]) => {
+      setStations(stationsRes.data);
+      setReferralSources(sourcesRes.data);
+      setFormData(prev => ({ 
+        ...prev, 
+        stationId: stationsRes.data.length > 0 ? stationsRes.data[0].station_id : '',
+        referralSourceId: sourcesRes.data.length > 0 ? sourcesRes.data[0].source_id : ''
+      }));
+    }).catch(() => {});
   }, []);
 
   const fillDummyData = () => {
     setFormData({
       patientId: 1,
       stationId: stations[0]?.station_id || 1,
+      referralSourceId: referralSources[0]?.source_id || 1,
       caseType: 'clinical',
       incidentDate: new Date().toISOString().split('T')[0],
       incidentLocation: '123 Main Street, Colombo'
@@ -132,6 +139,20 @@ const CaseRegistrationPage = () => {
               >
                 {stations.map(s => (
                   <option key={s.station_id} value={s.station_id}>{s.station_name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Referral Source *</label>
+              <select
+                required
+                value={formData.referralSourceId}
+                onChange={e => setFormData({...formData, referralSourceId: parseInt(e.target.value)})}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+              >
+                {referralSources.map(s => (
+                  <option key={s.source_id} value={s.source_id}>{s.source_name} ({s.source_type})</option>
                 ))}
               </select>
             </div>

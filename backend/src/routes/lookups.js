@@ -19,7 +19,8 @@ const LOOKUP_TABLES = [
   'injury_types',
   'weapon_types',
   'specimen_types',
-  'roles'
+  'roles',
+  'referral_sources'
 ];
 
 /**
@@ -34,7 +35,7 @@ router.get('/:table', async (req, res, next) => {
     }
 
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const rows = await repo.getAll(client, table);
       res.json(rows);
     });
@@ -94,6 +95,7 @@ router.patch('/:table/:id', requireRole('admin'), async (req, res, next) => {
       weapon_types: 'weapon_type_id',
       specimen_types: 'specimen_type_id',
       roles: 'role_id',
+      referral_sources: 'source_id',
     };
     const pkCol = primaryKeyMap[table];
 

@@ -26,7 +26,7 @@ router.use(requireRole('admin', 'doctor'));
 router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const exams = await repo.listAll(client, req.query.limit, req.query.offset);
       res.json(exams);
     });
@@ -38,7 +38,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
 router.get('/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const exam = await repo.getById(client, req.params.id);
       if (!exam) return res.status(404).json({ error: 'Examination not found or access denied.' });
       res.json(exam);
@@ -80,7 +80,7 @@ router.patch('/:id', validateParams(idParam), validateBody(postmortemExamUpdateS
 router.get('/:id/cause-of-death', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const cod = await repo.getCauseOfDeath(client, req.params.id);
       res.json(cod || {});
     });
@@ -119,7 +119,7 @@ router.patch('/:id/cause-of-death/:codId', validateParams(z.object({ id: z.coerc
 router.get('/:id/identifications', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const ids = await repo.getDeceasedIdentifications(client, req.params.id);
       res.json(ids); // Note: NIC ciphertext isn't decrypted here usually, depends on UI needs
     });

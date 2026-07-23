@@ -68,19 +68,29 @@ function encrypt(plaintext) {
 function decrypt(cipherBuf) {
   if (!cipherBuf) return null;
 
-  // Ensure we have a Buffer (pg may return it as a Buffer already)
-  const buf = Buffer.isBuffer(cipherBuf) ? cipherBuf : Buffer.from(cipherBuf);
+  try {
+    // Ensure we have a Buffer (pg may return it as a Buffer already)
+    const buf = Buffer.isBuffer(cipherBuf) ? cipherBuf : Buffer.from(cipherBuf);
 
-  const iv = buf.subarray(0, IV_LENGTH);
-  const authTag = buf.subarray(buf.length - AUTH_TAG_LENGTH);
-  const encrypted = buf.subarray(IV_LENGTH, buf.length - AUTH_TAG_LENGTH);
+    // A valid AES-256-GCM buffer must at least contain IV and Auth Tag
+    if (buf.length < IV_LENGTH + AUTH_TAG_LENGTH) {
+      return '[INVALID ENCRYPTION DATA]';
+    }
 
-  const decipher = crypto.createDecipheriv(ALGORITHM, getAesKey(), iv, {
-    authTagLength: AUTH_TAG_LENGTH,
-  });
-  decipher.setAuthTag(authTag);
+    const iv = buf.subarray(0, IV_LENGTH);
+    const authTag = buf.subarray(buf.length - AUTH_TAG_LENGTH);
+    const encrypted = buf.subarray(IV_LENGTH, buf.length - AUTH_TAG_LENGTH);
 
-  return decipher.update(encrypted, undefined, 'utf8') + decipher.final('utf8');
+    const decipher = crypto.createDecipheriv(ALGORITHM, getAesKey(), iv, {
+      authTagLength: AUTH_TAG_LENGTH,
+    });
+    decipher.setAuthTag(authTag);
+
+    return decipher.update(encrypted, undefined, 'utf8') + decipher.final('utf8');
+  } catch (err) {
+    console.error('Decryption error:', err.message);
+    return '[DECRYPTION FAILED]';
+  }
 }
 
 /**

@@ -2,13 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
-import { BookOpen, UserMinus } from 'lucide-react';
+import { BookOpen, UserMinus, UploadCloud } from 'lucide-react';
 
 const PostmortemCaseDetailsPage = () => {
   const { id } = useParams();
   const toast = useToast();
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  // Authorization and Notes
+  const [authorizationType, setAuthorizationType] = useState('');
 
   // Anatomical notes JSON editor state
   const [notes, setNotes] = useState({
@@ -21,6 +25,7 @@ const PostmortemCaseDetailsPage = () => {
     api.get(`/postmortem-examinations/${id}`)
       .then(res => {
         setExam(res.data);
+        if (res.data?.authorization_type) setAuthorizationType(res.data.authorization_type);
         if (res.data?.anatomical_notes) setNotes(res.data.anatomical_notes);
       })
       .catch(() => {
@@ -29,6 +34,7 @@ const PostmortemCaseDetailsPage = () => {
             const match = res.data.find(e => e.pmr_id == id || e.case_id == id);
             if (match) {
               setExam(match);
+              if (match.authorization_type) setAuthorizationType(match.authorization_type);
               if (match.anatomical_notes) setNotes(match.anatomical_notes);
             }
           })
@@ -39,10 +45,36 @@ const PostmortemCaseDetailsPage = () => {
 
   const saveNotes = async () => {
     try {
-      await api.patch(`/postmortem-examinations/${id}`, { anatomicalNotes: notes });
-      toast.success("Anatomical notes saved successfully.");
+      await api.patch(`/postmortem-examinations/${id}`, { 
+        anatomicalNotes: notes,
+        authorizationType: authorizationType || null
+      });
+      toast.success("Postmortem details saved successfully.");
     } catch (err) {
-      toast.error("Failed to save notes.");
+      toast.error("Failed to save details.");
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('case_id', exam.case_id);
+    formData.append('file_name', file.name);
+
+    try {
+      await api.post('/digital-assets', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success("Supporting document uploaded successfully.");
+    } catch (err) {
+      toast.error("Upload failed.");
+    } finally {
+      setUploading(false);
+      e.target.value = null; // reset input
     }
   };
 
@@ -68,13 +100,39 @@ const PostmortemCaseDetailsPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Basic Info */}
+        {/* Basic Info & Authorization */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
             <UserMinus className="w-5 h-5 mr-2 text-slate-500" />
             <h3 className="font-semibold text-slate-800">Death Details</h3>
           </div>
           <div className="p-6 space-y-4">
+            <div className="mb-6 pb-6 border-b border-slate-100">
+              <label className="block text-xs font-medium text-slate-700 mb-2">Authorization Type *</label>
+              <select 
+                value={authorizationType}
+                onChange={e => setAuthorizationType(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-primary-500 focus:border-primary-500 mb-4"
+              >
+                <option value="">Select Authorization...</option>
+                <option value="police_inquest">Police Inquest Order</option>
+                <option value="magistrate_court_order">Magistrate / Court Order</option>
+              </select>
+
+              {authorizationType && (
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex justify-between items-center">
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900">Supporting Document</h4>
+                    <p className="text-xs text-blue-700 mt-1">Please upload the official {authorizationType === 'police_inquest' ? 'inquest' : 'court'} order.</p>
+                  </div>
+                  <label className="cursor-pointer px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 shadow-sm flex items-center">
+                    {uploading ? 'Uploading...' : <><UploadCloud className="w-4 h-4 mr-1.5" /> Upload</>}
+                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={handleFileUpload} disabled={uploading} />
+                  </label>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="block text-xs font-medium text-slate-500 mb-1">Manner of Death</span>

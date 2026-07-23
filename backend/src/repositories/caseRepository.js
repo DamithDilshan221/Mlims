@@ -66,10 +66,10 @@ async function listAll(client, { caseType, status, patientId, limit = 50, offset
  *
  * SQL: SELECT * FROM sp_register_case($1, $2, $3, $4, $5)
  */
-async function registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation) {
+async function registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId = null) {
   const { rows } = await client.query(
-    `SELECT * FROM sp_register_case($1, $2, $3, $4, $5)`,
-    [patientId, stationId, caseType, incidentDate, incidentLocation]
+    `SELECT * FROM sp_register_case($1, $2, $3, $4, $5, $6)`,
+    [patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId]
   );
   return rows[0]; // { p_case_id }
 }

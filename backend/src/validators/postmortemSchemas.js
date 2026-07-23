@@ -7,6 +7,7 @@ const { sanitizedString } = require('./commonSchemas');
 
 const postmortemExamSchema = z.object({
   caseId: z.number().positive(),
+  authorizationType: z.enum(['police_inquest', 'magistrate_court_order']).optional().nullable(),
   inquestNo: sanitizedString.max(50).optional().nullable(),
   orderedBy: sanitizedString.max(150).optional().nullable(),
   dateOfPm: z.string().date(),

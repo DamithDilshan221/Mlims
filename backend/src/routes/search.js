@@ -6,7 +6,7 @@ const express = require('express');
 const authenticate = require('../middleware/authenticate');
 const { validateQuery } = require('../middleware/validate');
 const { getPool } = require('../db/pools');
-const { withClient } = require('../db/transaction');
+const { withTransaction } = require('../db/transaction');
 const { computeSearchHash, decrypt } = require('../utils/encryption');
 const { z } = require('zod');
 const { sanitizedString } = require('../validators/commonSchemas');
@@ -29,7 +29,7 @@ router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
     const pool = getPool(req.user.role_name);
     const { q, type } = req.query;
 
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       let results = [];
 
       if (type === 'case') {

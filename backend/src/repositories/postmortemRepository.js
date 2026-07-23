@@ -45,13 +45,13 @@ async function listAll(client, limit = 50, offset = 0) {
 async function create(client, data) {
   const { rows } = await client.query(
     `INSERT INTO postmortem_examinations
-       (case_id, doctor_id, inquest_no, ordered_by, date_of_pm, time_of_pm,
+       (case_id, doctor_id, authorization_type, inquest_no, ordered_by, date_of_pm, time_of_pm,
         date_of_death, place_of_death, manner_of_death,
         rigor_mortis, hypostasis, putrefaction, anatomical_notes)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING *`,
     [
-      data.caseId, data.doctorId, data.inquestNo, data.orderedBy,
+      data.caseId, data.doctorId, data.authorizationType, data.inquestNo, data.orderedBy,
       data.dateOfPm, data.timeOfPm, data.dateOfDeath, data.placeOfDeath,
       data.mannerOfDeath, data.rigorMortis, data.hypostasis,
       data.putrefaction, data.anatomicalNotes ? JSON.stringify(data.anatomicalNotes) : null,
@@ -63,21 +63,22 @@ async function create(client, data) {
 async function update(client, pmrId, data) {
   const { rows } = await client.query(
     `UPDATE postmortem_examinations
-     SET    inquest_no = COALESCE($2, inquest_no),
-            ordered_by = COALESCE($3, ordered_by),
-            date_of_pm = COALESCE($4, date_of_pm),
-            time_of_pm = COALESCE($5, time_of_pm),
-            date_of_death = COALESCE($6, date_of_death),
-            place_of_death = COALESCE($7, place_of_death),
-            manner_of_death = COALESCE($8, manner_of_death),
-            rigor_mortis = COALESCE($9, rigor_mortis),
-            hypostasis = COALESCE($10, hypostasis),
-            putrefaction = COALESCE($11, putrefaction),
-            anatomical_notes = COALESCE($12, anatomical_notes)
+     SET    authorization_type = COALESCE($2, authorization_type),
+            inquest_no = COALESCE($3, inquest_no),
+            ordered_by = COALESCE($4, ordered_by),
+            date_of_pm = COALESCE($5, date_of_pm),
+            time_of_pm = COALESCE($6, time_of_pm),
+            date_of_death = COALESCE($7, date_of_death),
+            place_of_death = COALESCE($8, place_of_death),
+            manner_of_death = COALESCE($9, manner_of_death),
+            rigor_mortis = COALESCE($10, rigor_mortis),
+            hypostasis = COALESCE($11, hypostasis),
+            putrefaction = COALESCE($12, putrefaction),
+            anatomical_notes = COALESCE($13, anatomical_notes)
      WHERE  pmr_id = $1
      RETURNING *`,
     [
-      pmrId, data.inquestNo, data.orderedBy, data.dateOfPm, data.timeOfPm,
+      pmrId, data.authorizationType, data.inquestNo, data.orderedBy, data.dateOfPm, data.timeOfPm,
       data.dateOfDeath, data.placeOfDeath, data.mannerOfDeath,
       data.rigorMortis, data.hypostasis, data.putrefaction,
       data.anatomicalNotes ? JSON.stringify(data.anatomicalNotes) : undefined,
