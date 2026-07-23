@@ -102,6 +102,7 @@ async function main() {
   const hashForensic = await bcrypt.hash('forensic123', 12);
   const hashPolice = await bcrypt.hash('police123', 12);
   const hashCourt = await bcrypt.hash('court123', 12);
+  const hashClerk = await bcrypt.hash('clerk123', 12);
 
   // Set all seeded users to '1234'
   await mlimsClient.query(`UPDATE users SET password_hash = $1`, [hash1234]);
@@ -113,6 +114,7 @@ async function main() {
     { roleId: 3, username: 'forensic', hash: hashForensic },
     { roleId: 4, username: 'police', hash: hashPolice },
     { roleId: 5, username: 'court', hash: hashCourt },
+    { roleId: 6, username: 'clerk', hash: hashClerk },
   ];
 
   for (const u of demoUsers) {
@@ -137,6 +139,7 @@ async function main() {
   console.log("  • Forensic Staff:   forensic / forensic123 (or lab.malinga / 1234)");
   console.log("  • Police Officer:   police / police123 (or ofc.perera / 1234)");
   console.log("  • Court Registrar:  court / court123 (or reg.fernando / 1234)");
+  console.log("  • Records Clerk:    clerk / clerk123 (or clerk.silva / 1234)");
 
   await mlimsClient.end();
 }

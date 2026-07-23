@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
-import { UserCog, ShieldBan, ShieldCheck, KeyRound, AlertTriangle } from 'lucide-react';
+import { UserCog, ShieldBan, ShieldCheck, KeyRound, AlertTriangle, UserPlus } from 'lucide-react';
 import clsx from 'clsx';
 
 const UserManagementPage = () => {
@@ -74,16 +75,27 @@ const UserManagementPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">User & Role Management</h2>
-        <p className="text-slate-500 text-sm mt-1">Manage system accounts and access control statuses.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">User & Role Management</h2>
+          <p className="text-slate-500 text-sm mt-1">Manage system accounts and access control statuses.</p>
+        </div>
+        <Link 
+          to="/staff"
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-bold hover:bg-primary-700 shadow-sm flex items-center"
+        >
+          <UserPlus className="w-4 h-4 mr-2" /> Add / Onboard Personnel
+        </Link>
       </div>
 
       {/* Users Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
-          <UserCog className="w-5 h-5 mr-2 text-slate-500" />
-          <h3 className="font-semibold text-slate-800">System Accounts</h3>
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <div className="flex items-center">
+            <UserCog className="w-5 h-5 mr-2 text-slate-500" />
+            <h3 className="font-semibold text-slate-800">System Accounts</h3>
+          </div>
+          <span className="text-xs text-slate-500">Total Accounts: <strong>{users.length}</strong></span>
         </div>
         <table className="w-full text-left text-sm text-slate-600">
           <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
