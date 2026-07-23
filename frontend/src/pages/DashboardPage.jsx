@@ -6,9 +6,10 @@ import {
   Users, FileText, Bell, FlaskConical, AlertTriangle, ShieldCheck,
   Activity, Skull, Gavel, Clock, Scale, ChevronRight,
   FileCheck, ClipboardList, Stethoscope, Plus, Upload, Calendar,
-  Shield, Building2, BadgeCheck, Search
+  Shield, Building2, BadgeCheck, Search, Download
 } from 'lucide-react';
 import clsx from 'clsx';
+import LabRequestModal from '../components/modals/LabRequestModal';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -16,6 +17,9 @@ const DashboardPage = () => {
   const [policeStats, setPoliceStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [trialCalendar, setTrialCalendar] = useState({ mlrTrials: [], summonsAppearances: [] });
+  const [recentCases, setRecentCases] = useState([]);
+  const [labRequests, setLabRequests] = useState([]);
+  const [showLabModal, setShowLabModal] = useState(false);
 
   const isPolice = user?.role === 'police';
   const isDoctor = user?.role === 'doctor' || user?.role === 'admin';
@@ -31,7 +35,17 @@ const DashboardPage = () => {
     api.get('/police-hub/dashboard')
       .then(res => setPoliceStats(res.data))
       .catch(() => { });
-  }, [user.role]);
+
+    if (user?.role !== 'police') {
+      api.get('/cases?limit=5').then(res => setRecentCases(res.data)).catch(() => {});
+      api.get('/lab-requests').then(res => {
+        // Just show the 5 most recent requests in the dashboard
+        setLabRequests(res.data.slice(0, 5));
+      }).catch(() => {});
+    }
+  }, [user.role, user.staff_id]);
+
+  
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const allEvents = [
@@ -137,42 +151,130 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Police Requests & Inquest Status */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-800 flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-blue-500" />
-                Police Requests & Inquest Status
-              </h3>
-              <Link to="/police-hub" className="text-xs text-primary-600 hover:underline font-medium">View All</Link>
+          {/* Role-Specific Main Section */}
+          {isPolice ? (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 className="font-semibold text-slate-800 flex items-center">
+                  <Shield className="w-5 h-5 mr-2 text-blue-500" />
+                  Police Requests & Inquest Status
+                </h3>
+                <Link to="/police-hub" className="text-xs text-primary-600 hover:underline font-medium">View All</Link>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {stationCounts.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm">No police requests data.</div>
+                ) : (
+                  stationCounts.slice(0, 5).map((s, i) => (
+                    <div key={i} className="p-5 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3">
+                          <Building2 className="w-5 h-5 text-blue-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-slate-800">{s.station_name}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{s.case_count} active case(s)</p>
+                          </div>
+                        </div>
+                        <span className={clsx(
+                          "text-xs font-bold px-2.5 py-1 rounded-full",
+                          parseInt(s.case_count) > 5 ? 'bg-red-100 text-red-700' :
+                            parseInt(s.case_count) > 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                        )}>
+                          {s.case_count} cases
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="divide-y divide-slate-100">
-              {stationCounts.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-sm">No police requests data.</div>
-              ) : (
-                stationCounts.slice(0, 5).map((s, i) => (
-                  <div key={i} className="p-5 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3">
-                        <Building2 className="w-5 h-5 text-blue-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">{s.station_name}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{s.case_count} active case(s)</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-800 flex items-center">
+                    <Activity className="w-5 h-5 mr-2 text-emerald-500" />
+                    Recent Cases
+                  </h3>
+                  <Link to="/cases" className="text-xs text-primary-600 hover:underline font-medium">View All</Link>
+                </div>
+                <div className="divide-y divide-slate-100 h-[320px] overflow-y-auto">
+                  {recentCases.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-sm">No recent cases found.</div>
+                  ) : (
+                    recentCases.map((c) => (
+                      <div key={c.case_id} className="p-5 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3">
+                            <FileText className="w-5 h-5 text-emerald-400 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">
+                                <Link to={`/cases/clinical/${c.case_id}`} className="hover:text-primary-600 transition-colors">
+                                  {c.case_number} — {c.patient_name}
+                                </Link>
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">{c.station_name} • {new Date(c.incident_date).toLocaleDateString('en-GB')}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <span className={clsx(
-                        "text-xs font-bold px-2.5 py-1 rounded-full",
-                        parseInt(s.case_count) > 5 ? 'bg-red-100 text-red-700' :
-                          parseInt(s.case_count) > 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
-                      )}>
-                        {s.case_count} cases
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-800 flex items-center">
+                    <FlaskConical className="w-5 h-5 mr-2 text-indigo-500" />
+                    My Lab Requests
+                  </h3>
+                  <button onClick={() => setShowLabModal(true)} className="text-xs text-indigo-600 hover:underline font-medium flex items-center">
+                    <Plus className="w-3 h-3 mr-1" /> New
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100 h-[320px] overflow-y-auto">
+                  {labRequests.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-sm">No pending lab requests.</div>
+                  ) : (
+                    labRequests.map((r) => (
+                      <div key={r.request_id} className="p-5 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3">
+                            <FlaskConical className={clsx("w-5 h-5 mt-0.5", r.status === 'completed' ? 'text-green-500' : 'text-indigo-400')} />
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">
+                                {r.request_type} <span className="text-xs text-slate-500 font-normal">({r.specimen_type_name})</span>
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">Case: {r.case_number} • {new Date(r.request_date).toLocaleDateString('en-GB')}</p>
+                              
+                              {r.status === 'completed' && r.document_uri && (
+                                <a 
+                                  href={`http://localhost:3000/api${r.document_uri}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="mt-2 inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                                >
+                                  <Download className="w-3 h-3 mr-1" /> Download Report
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                          <span className={clsx("text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                            r.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            r.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                            'bg-amber-100 text-amber-700'
+                          )}>
+                            {r.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column */}
@@ -215,6 +317,10 @@ const DashboardPage = () => {
                     <span><FileText className="w-4 h-4 inline mr-2" /> Generate MLR</span>
                     <ChevronRight className="w-4 h-4" />
                   </Link>
+                  <button onClick={() => setShowLabModal(true)} className="flex items-center justify-between w-full px-4 py-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium">
+                    <span><FlaskConical className="w-4 h-4 inline mr-2" /> Request Lab Report</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </>
               )}
               <Link to="/police-hub" className="flex items-center justify-between w-full px-4 py-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium">
@@ -296,6 +402,17 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+      
+      <LabRequestModal 
+        isOpen={showLabModal} 
+        onClose={() => setShowLabModal(false)}
+        onSuccess={() => {
+          api.get('/lab-requests').then(res => {
+            const mine = res.data.filter(r => user?.role === 'admin' || r.assigned_doctor_id === user?.staff_id);
+            setLabRequests(mine.slice(0, 5));
+          });
+        }}
+      />
     </div>
   );
 };

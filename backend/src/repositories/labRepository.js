@@ -10,10 +10,13 @@
 
 async function getRequestById(client, requestId) {
   const { rows } = await client.query(
-    `SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name
+    `SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name,
+            p.full_name AS patient_name, fc.assigned_doctor_id, fc.case_number
      FROM   lab_requests lr
      JOIN   specimens sp ON lr.specimen_id = sp.specimen_id
      JOIN   specimen_types st ON sp.specimen_type_id = st.specimen_type_id
+     JOIN   forensic_cases fc ON sp.case_id = fc.case_id
+     JOIN   patients p ON fc.patient_id = p.patient_id
      WHERE  lr.request_id = $1`,
     [requestId]
   );
@@ -26,10 +29,15 @@ async function getRequestById(client, requestId) {
  */
 async function listRequests(client, { status, limit = 50, offset = 0 } = {}) {
   let sql = `
-    SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name
+    SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name,
+           p.full_name AS patient_name, fc.assigned_doctor_id, fc.case_number,
+           res.document_uri, res.findings
     FROM   lab_requests lr
     JOIN   specimens sp ON lr.specimen_id = sp.specimen_id
     JOIN   specimen_types st ON sp.specimen_type_id = st.specimen_type_id
+    JOIN   forensic_cases fc ON sp.case_id = fc.case_id
+    JOIN   patients p ON fc.patient_id = p.patient_id
+    LEFT JOIN lab_results res ON lr.request_id = res.request_id
     WHERE  1=1`;
   const params = [];
   let idx = 1;
