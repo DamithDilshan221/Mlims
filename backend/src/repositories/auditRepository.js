@@ -10,7 +10,7 @@
  * Optionally filter by user_id or date range, leveraging the index on
  * (user_id, changed_at) from Phase 1.
  */
-async function listPaginated(client, { userId, startDate, endDate, limit = 50, offset = 0 } = {}) {
+async function listPaginated(client, { userId, table, action, startDate, endDate, limit = 50, offset = 0 } = {}) {
   let sql = `SELECT * FROM v_audit_log_detailed WHERE 1=1`;
   const params = [];
   let idx = 1;
@@ -18,6 +18,14 @@ async function listPaginated(client, { userId, startDate, endDate, limit = 50, o
   if (userId) {
     sql += ` AND user_id = $${idx++}`;
     params.push(userId);
+  }
+  if (table) {
+    sql += ` AND table_name ILIKE $${idx++}`;
+    params.push(`%${table}%`);
+  }
+  if (action) {
+    sql += ` AND action_type = $${idx++}`;
+    params.push(action);
   }
   if (startDate) {
     sql += ` AND changed_at >= $${idx++}`;

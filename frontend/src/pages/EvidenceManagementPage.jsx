@@ -3,35 +3,52 @@ import api from '../utils/api';
 import AppendOnlyTimeline from '../components/layout/AppendOnlyTimeline';
 import { Package, Search, PlusCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const EvidenceManagementPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [specimens, setSpecimens] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // New transfer form state (Forensic Staff Only)
   const [showTransferForm, setShowTransferForm] = useState(null); // holds specimen_id
   const [transferData, setTransferData] = useState({ transferred_to: '', purpose: '' });
 
   useEffect(() => {
+    fetchSpecimens();
+  }, []);
+
+  const fetchSpecimens = () => {
     api.get('/specimens')
       .then(res => setSpecimens(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   const submitTransfer = async (e) => {
     e.preventDefault();
     try {
       await api.post('/chain-of-custody', { ...transferData, specimen_id: showTransferForm });
+      toast.success("Custody transfer recorded successfully.");
       setShowTransferForm(null);
-      // Reload specimens (in a real app, update state directly)
-      const res = await api.get('/specimens');
-      setSpecimens(res.data);
+      setTransferData({ transferred_to: '', purpose: '' });
+      fetchSpecimens();
     } catch (err) {
-      alert("Failed to record transfer");
+      toast.error("Failed to record custody transfer.");
     }
   };
+
+  const filteredSpecimens = specimens.filter(s => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      s.barcode_id?.toLowerCase().includes(q) ||
+      s.specimen_type?.toLowerCase().includes(q) ||
+      s.current_location?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -46,6 +63,8 @@ const EvidenceManagementPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Scan Barcode or Search..." 
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
             />
@@ -55,7 +74,9 @@ const EvidenceManagementPage = () => {
         <div className="divide-y divide-slate-100">
           {loading ? (
             <div className="p-8 text-center text-slate-400">Loading...</div>
-          ) : specimens.map(s => (
+          ) : filteredSpecimens.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No matching specimens found.</div>
+          ) : filteredSpecimens.map(s => (
             <div key={s.specimen_id} className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>

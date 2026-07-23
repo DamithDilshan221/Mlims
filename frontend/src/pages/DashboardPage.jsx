@@ -14,16 +14,10 @@ const DashboardPage = () => {
     // Fetch notifications (All roles)
     api.get('/notifications').then(res => setNotifications(res.data)).catch(() => {});
     
-    // In a real app, you'd have a /dashboard/stats endpoint that aggregates this based on role.
-    // For this prototype, we'll simulate fetching role-specific counts from various endpoints.
-    // We just set dummy data to illustrate the role-based widget architecture as requested.
-    setStats({
-      activeUsers: 14,
-      lockedAccounts: 2,
-      openCases: 8,
-      pendingLabs: 12,
-      pendingTransfers: 5,
-    });
+    // Fetch aggregated role-specific dashboard statistics
+    api.get('/statistics/dashboard')
+      .then(res => setStats(res.data))
+      .catch(err => console.error("Failed to load dashboard stats", err));
   }, [user.role]);
 
   return (

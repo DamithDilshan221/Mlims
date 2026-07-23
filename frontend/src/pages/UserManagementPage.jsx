@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
+import { useToast } from '../context/ToastContext';
 import { UserCog, ShieldBan, ShieldCheck, KeyRound, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 const UserManagementPage = () => {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +17,8 @@ const UserManagementPage = () => {
   const fetchData = async () => {
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        api.get('/admin/users'), // Assuming Admin route exists or falls back
-        api.get('/lookups?type=roles')
+        api.get('/admin/users'),
+        api.get('/lookups/roles')
       ]);
       setUsers(usersRes.data);
       setRoles(rolesRes.data);
@@ -33,15 +35,40 @@ const UserManagementPage = () => {
     
     try {
       if (action === 'deactivate') {
-        // Calls sp_deactivate_user in backend repository
         await api.delete(`/admin/users/${userId}`); 
+        toast.success(`User #${userId} deactivated.`);
       } else {
-        // Unlock
         await api.patch(`/admin/users/${userId}`, { isActive: true });
+        toast.success(`User #${userId} unlocked/activated.`);
       }
       fetchData();
     } catch (err) {
-      alert(`Failed to ${action} user.`);
+      toast.error(`Failed to ${action} user.`);
+    }
+  };
+
+  const handleResetPassword = async (userId, username) => {
+    const newPassword = window.prompt(`Enter new temporary password for user '${username}':`);
+    if (!newPassword || !newPassword.trim()) return;
+
+    try {
+      await api.patch(`/admin/users/${userId}`, { password: newPassword.trim() });
+      toast.success(`Password for '${username}' reset successfully.`);
+    } catch (err) {
+      toast.error("Failed to reset password.");
+    }
+  };
+
+  const handleEditRoleDesc = async (roleId, roleName, currentDesc) => {
+    const newDesc = window.prompt(`Enter new description for role '${roleName}':`, currentDesc || '');
+    if (newDesc === null) return;
+
+    try {
+      await api.patch(`/lookups/roles/${roleId}`, { description: newDesc.trim() });
+      toast.success(`Updated description for ${roleName}.`);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to update role description.");
     }
   };
 
@@ -93,7 +120,10 @@ const UserManagementPage = () => {
                   >
                     {u.is_active ? 'Deactivate' : 'Unlock'}
                   </button>
-                  <button className="text-xs font-medium text-amber-600 hover:underline">
+                  <button 
+                    onClick={() => handleResetPassword(u.user_id, u.username)}
+                    className="text-xs font-medium text-amber-600 hover:underline"
+                  >
                     Reset Password
                   </button>
                 </td>
@@ -126,7 +156,12 @@ const UserManagementPage = () => {
               <div key={r.role_id} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
                 <h4 className="font-bold text-slate-800 font-mono">{r.role_name}</h4>
                 <p className="text-sm text-slate-500 mt-2">{r.description || 'No description provided.'}</p>
-                <button className="mt-3 text-xs font-medium text-blue-600 hover:underline">Edit Description</button>
+                <button 
+                  onClick={() => handleEditRoleDesc(r.role_id, r.role_name, r.description)}
+                  className="mt-3 text-xs font-medium text-blue-600 hover:underline"
+                >
+                  Edit Description
+                </button>
               </div>
             ))}
           </div>

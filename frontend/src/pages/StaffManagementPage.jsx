@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
+import { useToast } from '../context/ToastContext';
 import { Users, PlusCircle, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
 
 const StaffManagementPage = () => {
+  const toast = useToast();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -33,8 +35,8 @@ const StaffManagementPage = () => {
     setLoading(true);
     try {
       const [staffRes, rolesRes] = await Promise.all([
-        api.get('/lookups?type=staff'), // Or a dedicated /admin/staff if built, lookups is fine for prototyping list
-        api.get('/lookups?type=roles')
+        api.get('/admin/staff'),
+        api.get('/lookups/roles')
       ]);
       setStaffList(staffRes.data);
       setRoles(rolesRes.data);
@@ -52,7 +54,7 @@ const StaffManagementPage = () => {
     
     try {
       await api.post('/admin/staff', formData);
-      alert("Staff and User Account created successfully!");
+      toast.success("Staff member and user account created successfully!");
       setShowForm(false);
       setFormData({
         username: '', password: '', role_id: 2, first_name: '', last_name: '', designation: 'Doctor', contact_no: '', slmc_reg_no: ''
@@ -60,6 +62,7 @@ const StaffManagementPage = () => {
       fetchData();
     } catch (err) {
       setError(err.response?.data?.error || "Failed to create staff member.");
+      toast.error("Failed to create staff member.");
     } finally {
       setSubmitting(false);
     }

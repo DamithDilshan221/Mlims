@@ -12,18 +12,25 @@ const ReportListPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a complete implementation, this would likely be a unified /reports endpoint or a specific DB view.
-    // We will aggregate from the clinical and postmortem endpoints for this prototype.
-    Promise.all([
-      api.get('/clinical-examinations'),
-      api.get('/postmortem-examinations')
-    ]).then(([clinRes, pmRes]) => {
-      setReports({
-        clinical: clinRes.data,
-        postmortem: pmRes.data
-      });
-    }).catch(() => {})
-    .finally(() => setLoading(false));
+    api.get('/reports/all')
+      .then(res => {
+        const clinical = res.data.filter(r => r.case_type === 'clinical' || r.mlef_id);
+        const postmortem = res.data.filter(r => r.case_type === 'postmortem' || r.pmr_id);
+        setReports({ clinical, postmortem });
+      })
+      .catch(() => {
+        // Fallback to separate endpoints if view query fails
+        Promise.all([
+          api.get('/clinical-examinations'),
+          api.get('/postmortem-examinations')
+        ]).then(([clinRes, pmRes]) => {
+          setReports({
+            clinical: clinRes.data,
+            postmortem: pmRes.data
+          });
+        }).catch(() => {});
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Compute status for Clinical (requires fetching medico_legal_reports, 

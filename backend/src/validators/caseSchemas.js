@@ -8,6 +8,7 @@ const { sanitizedString, paginationQuery } = require('./commonSchemas');
 const caseQuerySchema = paginationQuery.extend({
   caseType: z.enum(['clinical', 'postmortem']).optional(),
   status: z.enum(['registered', 'under_investigation', 'pending_report', 'completed', 'closed']).optional(),
+  patientId: z.coerce.number().positive().optional(),
 });
 
 const registerCaseSchema = z.object({

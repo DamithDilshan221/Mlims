@@ -56,15 +56,20 @@ const upload = multer({
 // ── Routes ─────────────────────────────────────────────────────────────────
 
 /**
- * GET /digital-assets/case/:caseId
+ * GET /digital-assets or GET /digital-assets/case/:caseId
  */
-router.get('/case/:caseId', async (req, res, next) => {
+router.get(['/', '/case/:caseId'], async (req, res, next) => {
   try {
+    const caseId = req.params.caseId || req.query.caseId;
+    if (!caseId) {
+      return res.status(400).json({ error: 'caseId query parameter or route param required.' });
+    }
+
     const pool = getPool(req.user.role_name);
     await withClient(pool, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM digital_assets WHERE case_id = $1 ORDER BY upload_date DESC`,
-        [req.params.caseId]
+        [caseId]
       );
       res.json(rows);
     });
@@ -74,17 +79,54 @@ router.get('/case/:caseId', async (req, res, next) => {
 });
 
 /**
- * POST /digital-assets/case/:caseId
- * Upload a file and insert metadata.
+ * GET /digital-assets/:id/content
+ * Downloads/streams the digital asset file from disk.
  */
-router.post('/case/:caseId', requireRole('admin', 'records_clerk', 'police', 'doctor'), upload.single('file'), async (req, res, next) => {
+router.get('/:id/content', async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withClient(pool, async (client) => {
+      const { rows } = await client.query(
+        `SELECT * FROM digital_assets WHERE asset_id = $1`,
+        [req.params.id]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Asset not found.' });
+      }
+
+      const asset = rows[0];
+      // file_uri is e.g. /uploads/filename
+      const filename = path.basename(asset.file_uri);
+      const filePath = path.resolve(config.upload.dir, filename);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'File on disk not found.' });
+      }
+
+      res.setHeader('Content-Type', asset.file_type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${asset.file_name}"`);
+      fs.createReadStream(filePath).pipe(res);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /digital-assets or POST /digital-assets/case/:caseId
+ * Upload a file and insert metadata into digital_assets table.
+ */
+router.post(['/', '/case/:caseId'], requireRole('admin', 'records_clerk', 'police', 'doctor'), upload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided.' });
     }
 
-    const caseId = req.params.caseId;
-    // Relative URI for serving the file later
+    const caseId = req.params.caseId || req.body.case_id;
+    if (!caseId) {
+      return res.status(400).json({ error: 'case_id is required.' });
+    }
+
     const fileUri = `/uploads/${req.file.filename}`;
 
     const pool = getPool(req.user.role_name);
@@ -92,12 +134,11 @@ router.post('/case/:caseId', requireRole('admin', 'records_clerk', 'police', 'do
       const { rows } = await client.query(
         `INSERT INTO digital_assets (case_id, file_name, file_uri, file_type)
          VALUES ($1, $2, $3, $4) RETURNING *`,
-        [caseId, req.file.originalname, fileUri, req.file.mimetype]
+        [caseId, req.file.originalname || req.body.file_name, fileUri, req.file.mimetype]
       );
       res.status(201).json(rows[0]);
     });
   } catch (err) {
-    // If multer throws an error (e.g., file too large), handle it cleanly
     if (err.message.includes('Invalid file type') || err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: err.message });
     }

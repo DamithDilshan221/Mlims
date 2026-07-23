@@ -30,7 +30,7 @@ async function getById(client, caseId) {
  * List cases with pagination and optional filters.
  * Leverages the composite index idx_cases_type_status.
  */
-async function listAll(client, { caseType, status, limit = 50, offset = 0 } = {}) {
+async function listAll(client, { caseType, status, patientId, limit = 50, offset = 0 } = {}) {
   let sql = `
     SELECT fc.*, p.full_name AS patient_name, ps.station_name
     FROM   forensic_cases fc
@@ -47,6 +47,10 @@ async function listAll(client, { caseType, status, limit = 50, offset = 0 } = {}
   if (status) {
     sql += ` AND fc.status = $${idx++}`;
     params.push(status);
+  }
+  if (patientId) {
+    sql += ` AND fc.patient_id = $${idx++}`;
+    params.push(patientId);
   }
 
   sql += ` ORDER BY fc.case_id DESC LIMIT $${idx++} OFFSET $${idx++}`;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,19 +6,31 @@ const CaseRegistrationPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [stations, setStations] = useState([]);
   
   const [formData, setFormData] = useState({
     patientId: '',
-    stationId: 1, // Hardcoded for prototype, usually derived from user context or select
+    stationId: '',
     caseType: 'clinical',
     incidentDate: '',
     incidentLocation: ''
   });
 
+  useEffect(() => {
+    api.get('/lookups/police_stations')
+      .then(res => {
+        setStations(res.data);
+        if (res.data.length > 0) {
+          setFormData(prev => ({ ...prev, stationId: res.data[0].station_id }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const fillDummyData = () => {
     setFormData({
-      patientId: 1, // Assumes patient 1 exists from seed data
-      stationId: 1,
+      patientId: 1,
+      stationId: stations[0]?.station_id || 1,
       caseType: 'clinical',
       incidentDate: new Date().toISOString().split('T')[0],
       incidentLocation: '123 Main Street, Colombo'
@@ -33,7 +45,6 @@ const CaseRegistrationPage = () => {
     setError(null);
     try {
       const res = await api.post('/cases', formData);
-      // The API calls sp_register_case which generates the case_number securely
       setRegisteredCase(res.data);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to register case.");
@@ -80,13 +91,15 @@ const CaseRegistrationPage = () => {
             <h2 className="text-xl font-bold text-slate-800">Register Forensic Case</h2>
             <p className="text-sm text-slate-500 mt-1">Initialize a new case to get a generated Case Number.</p>
           </div>
-          <button 
-            type="button" 
-            onClick={fillDummyData}
-            className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
-          >
-            Fill Dummy Data
-          </button>
+          {import.meta.env.DEV && (
+            <button 
+              type="button" 
+              onClick={fillDummyData}
+              className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
+            >
+              Fill Dummy Data
+            </button>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -107,6 +120,20 @@ const CaseRegistrationPage = () => {
                 placeholder="e.g. 1"
               />
               <p className="text-xs text-slate-400 mt-1">If patient does not exist, <a href="/patients/new" className="text-primary-600 hover:underline">register them first</a>.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Police Station *</label>
+              <select
+                required
+                value={formData.stationId}
+                onChange={e => setFormData({...formData, stationId: parseInt(e.target.value)})}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+              >
+                {stations.map(s => (
+                  <option key={s.station_id} value={s.station_id}>{s.station_name}</option>
+                ))}
+              </select>
             </div>
 
             <div>
