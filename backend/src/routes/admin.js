@@ -158,8 +158,8 @@ router.post('/staff', async (req, res, next) => {
         firstName: first_name || firstName,
         lastName: last_name || lastName,
         designation,
-        contactNo: contact_no || contactNo,
-        slmcRegNo: slmc_reg_no || slmcRegNo,
+        contactNo: contact_no || contactNo || null,
+        slmcRegNo: slmc_reg_no || slmcRegNo || null,
       });
 
       res.status(201).json(staff);
