@@ -21,16 +21,16 @@ const DashboardPage = () => {
   const isDoctor = user?.role === 'doctor' || user?.role === 'admin';
 
   useEffect(() => {
-    api.get('/notifications').then(res => setNotifications(res.data)).catch(() => {});
+    api.get('/notifications').then(res => setNotifications(res.data)).catch(() => { });
     api.get('/statistics/dashboard')
       .then(res => setStats(res.data))
-      .catch(() => {});
+      .catch(() => { });
     api.get('/statistics/trial-calendar')
       .then(res => setTrialCalendar(res.data))
-      .catch(() => {});
+      .catch(() => { });
     api.get('/police-hub/dashboard')
       .then(res => setPoliceStats(res.data))
-      .catch(() => {});
+      .catch(() => { });
   }, [user.role]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -117,7 +117,7 @@ const DashboardPage = () => {
                           <div className="flex items-center mt-2 space-x-3">
                             <span className={clsx("text-xs font-bold px-2 py-0.5 rounded-full",
                               event.status === 'dispatched' || event.status === 'complied' ? 'bg-green-100 text-green-700' :
-                              event.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')}>
+                                event.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')}>
                               {event.status?.replace(/_/g, ' ').toUpperCase()}
                             </span>
                             {event.court_case_no && <span className="text-xs text-slate-400">{event.court_case_no}</span>}
@@ -163,7 +163,7 @@ const DashboardPage = () => {
                       <span className={clsx(
                         "text-xs font-bold px-2.5 py-1 rounded-full",
                         parseInt(s.case_count) > 5 ? 'bg-red-100 text-red-700' :
-                        parseInt(s.case_count) > 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                          parseInt(s.case_count) > 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                       )}>
                         {s.case_count} cases
                       </span>
