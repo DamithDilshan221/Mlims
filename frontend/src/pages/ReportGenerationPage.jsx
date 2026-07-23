@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Printer, Save, FileCheck, Landmark } from 'lucide-react';
+import { Printer, Save, FileCheck, Landmark, ShieldCheck } from 'lucide-react';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
 
 const ReportGenerationPage = () => {
@@ -62,6 +62,17 @@ const ReportGenerationPage = () => {
     }
   };
 
+  const handleIssuePoliceCopy = async () => {
+    if (!window.confirm("Issue the police copy for this MLEF?")) return;
+    try {
+      await api.post(`/clinical-examinations/${id}/police-copy`);
+      toast.success("Police copy issued successfully.");
+      setData(prev => ({ ...prev, police_copy_issued: true }));
+    } catch {
+      toast.error("Failed to issue police copy.");
+    }
+  };
+
   const handleCourtAcknowledgment = async () => {
     try {
       await api.post(`/reports/${type}/${id}/acknowledge`);
@@ -111,6 +122,12 @@ const ReportGenerationPage = () => {
             </>
           )}
 
+          {type === 'clinical' && isIssued && !data.police_copy_issued && (
+            <button onClick={handleIssuePoliceCopy} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 font-medium rounded-lg flex items-center shadow-md">
+              <ShieldCheck className="w-4 h-4 mr-2" /> Issue Police Copy
+            </button>
+          )}
+
           {isCourtOfficial && isIssued && !isAcknowledged && (
             <button onClick={handleCourtAcknowledgment} className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-lg flex items-center shadow-md">
               <Landmark className="w-4 h-4 mr-2" /> Acknowledge (Generate Receipt)
@@ -138,6 +155,12 @@ const ReportGenerationPage = () => {
           <div className="text-right">
             <p><span className="font-bold">Generated:</span> {new Date().toLocaleDateString()}</p>
             <p><span className="font-bold">Status:</span> {isAcknowledged ? 'Court Acknowledged' : isIssued ? 'Final Issued' : 'DRAFT'}</p>
+            {type === 'clinical' && data.police_copy_issued && (
+              <p className="text-blue-600 font-bold mt-1 text-xs uppercase tracking-wide border border-blue-200 inline-block px-2 py-1 rounded bg-blue-50">
+                <ShieldCheck className="w-3 h-3 inline mr-1 -mt-0.5" />
+                Police Copy Issued
+              </p>
+            )}
           </div>
         </div>
 

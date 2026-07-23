@@ -32,7 +32,7 @@ const auditQuerySchema = paginationQuery.extend({
 router.get(['/audit-log', '/audit-logs'], requireRole('admin', 'auditor'), validateQuery(auditQuerySchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const logs = await auditRepo.listPaginated(client, req.query);
       res.json(logs);
     });
@@ -50,7 +50,7 @@ router.get(['/audit-log', '/audit-logs'], requireRole('admin', 'auditor'), valid
 router.get('/notifications', async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM notifications WHERE user_id = $1 ORDER BY notification_id DESC`,
         [req.user.user_id]

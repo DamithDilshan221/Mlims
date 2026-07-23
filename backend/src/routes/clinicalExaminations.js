@@ -25,7 +25,7 @@ router.use(requireRole('admin', 'doctor'));
 router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const exams = await repo.listAll(client, req.query.limit, req.query.offset);
       res.json(exams);
     });
@@ -40,7 +40,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
 router.get('/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const exam = await repo.getById(client, req.params.id);
       if (!exam) return res.status(404).json({ error: 'Examination not found or access denied.' });
       res.json(exam);
@@ -83,12 +83,32 @@ router.patch('/:id', validateParams(idParam), validateBody(clinicalExamUpdateSch
   }
 });
 
+/**
+ * POST /clinical-examinations/:id/police-copy
+ * Marks the MLEF as having its police copy issued, tracked via audit_logs.
+ */
+router.post('/:id/police-copy', validateParams(idParam), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      // Ensure the exam exists
+      const exam = await repo.getById(client, req.params.id);
+      if (!exam) return res.status(404).json({ error: 'Examination not found or access denied.' });
+      
+      await repo.issuePoliceCopy(client, req.params.id, req.user.user_id);
+      res.json({ message: 'Police copy issued successfully.' });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── Medical Referrals Sub-routes ───────────────────────────────────────────
 
 router.get('/:id/referrals', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const referrals = await repo.getReferralsByExamId(client, req.params.id);
       res.json(referrals);
     });

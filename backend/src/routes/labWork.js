@@ -24,7 +24,7 @@ router.use(authenticate);
 router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const requests = await repo.listRequests(client, req.query);
       res.json(requests);
     });
@@ -39,7 +39,7 @@ router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, n
 router.get('/requests/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const request = await repo.getRequestById(client, req.params.id);
       if (!request) return res.status(404).json({ error: 'Request not found' });
       res.json(request);
@@ -88,7 +88,7 @@ router.patch('/requests/:id/status', requireRole('admin', 'forensic_staff'), val
 router.get('/requests/:id/result', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const result = await repo.getResultByRequestId(client, req.params.id);
       if (!result) return res.status(404).json({ error: 'Result not found' });
       res.json(result);

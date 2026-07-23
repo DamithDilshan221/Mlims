@@ -28,7 +28,7 @@ router.use(requireRole('admin'));
 router.get('/users', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const users = await userRepo.listAll(client, req.query.limit, req.query.offset);
       res.json(users);
     });
@@ -124,7 +124,7 @@ router.patch('/roles/:id', validateParams(idParam), async (req, res, next) => {
 router.get('/staff', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const staff = await staffRepo.listAll(client, req.query.limit, req.query.offset);
       res.json(staff);
     });
@@ -179,20 +179,24 @@ router.post('/backup', async (req, res, next) => {
       if (error) {
         console.error('Backup failed:', error);
         const pool = getPool('admin');
-        pool.query(
-          `INSERT INTO audit_logs (user_id, table_name, action_type, new_payload) 
-           VALUES ($1, 'SYSTEM_BACKUP', 'BACKUP_FAILED', '{"error": "Simulated failure"}')`,
-          [req.user.user_id]
-        ).catch(e => console.error(e));
+        withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+          await client.query(
+            `INSERT INTO audit_logs (user_id, table_name, action_type, new_payload) 
+             VALUES ($1, 'SYSTEM_BACKUP', 'BACKUP_FAILED', '{"error": "Simulated failure"}')`,
+            [req.user.user_id]
+          );
+        }).catch(e => console.error(e));
         return;
       }
       
       const pool = getPool('admin');
-      pool.query(
-        `INSERT INTO audit_logs (user_id, table_name, action_type, new_payload) 
-         VALUES ($1, 'SYSTEM_BACKUP', 'BACKUP_COMPLETED', '{"status": "Success", "size": "15MB"}')`,
-        [req.user.user_id]
-      ).catch(e => console.error(e));
+      withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+        await client.query(
+          `INSERT INTO audit_logs (user_id, table_name, action_type, new_payload) 
+           VALUES ($1, 'SYSTEM_BACKUP', 'BACKUP_COMPLETED', '{"status": "Success", "size": "15MB"}')`,
+          [req.user.user_id]
+        );
+      }).catch(e => console.error(e));
     });
 
     res.status(202).json({ message: "Backup enqueued." });

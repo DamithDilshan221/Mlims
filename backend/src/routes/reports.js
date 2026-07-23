@@ -20,7 +20,7 @@ router.use(authenticate);
 router.get('/mlr', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const mlrs = await repo.listMLRs(client, req.query.limit, req.query.offset);
       res.json(mlrs);
     });
@@ -32,7 +32,7 @@ router.get('/mlr', validateQuery(paginationQuery), async (req, res, next) => {
 router.get('/mlr/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const mlr = await repo.getMLRById(client, req.params.id);
       if (!mlr) return res.status(404).json({ error: 'MLR not found' });
       res.json(mlr);
@@ -72,7 +72,7 @@ router.patch('/mlr/:id', requireRole('admin', 'doctor'), validateParams(idParam)
 router.get('/court-receipts', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const receipts = await repo.listReceipts(client, req.query.limit, req.query.offset);
       res.json(receipts);
     });
@@ -84,7 +84,7 @@ router.get('/court-receipts', validateQuery(paginationQuery), async (req, res, n
 router.get('/court-receipts/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const receipt = await repo.getReceiptById(client, req.params.id);
       if (!receipt) return res.status(404).json({ error: 'Receipt not found' });
       res.json(receipt);
@@ -120,8 +120,8 @@ router.post('/court-receipts', requireRole('admin', 'court'), validateBody(court
  */
 router.get('/all', async (req, res, next) => {
   try {
-    const pool = getPool('admin_role');
-    await withClient(pool, async (client) => {
+    const pool = getPool('admin');
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(`SELECT * FROM v_report_open_cases ORDER BY case_id DESC`);
       res.json(rows);
     });

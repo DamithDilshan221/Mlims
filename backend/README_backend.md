@@ -28,6 +28,13 @@ This API strictly follows the **Thin Application, Fat Database** pattern, levera
    - **Immutable Auditing**: Database triggers capture every `INSERT`/`UPDATE`/`DELETE` and write it to `audit_logs` using the session variables passed from the backend.
    - **Account Lockout**: The database `audit_logs` are used directly to detect 5 failed login attempts in 15 minutes, instantly locking the account.
 
+3. **Deriving State from Audit Logs (Convention)**:
+   Instead of constantly altering tables to add state columns (like `is_locked`, `police_copy_issued`, or `last_backup_status`), this project uses the `audit_logs` table as an event store to derive status dynamically. Examples include:
+   - **Phase 2 (Login Lockout)**: Checking `LOGIN_FAILED` events.
+   - **Phase 5/6 (Backups)**: Checking `SYSTEM_BACKUP` events.
+   - **Phase 6 (Police Copy)**: Checking `POLICE_COPY` events for an MLEF.
+   *Pattern Rule*: If a status flag represents a workflow event rather than core entity data, insert an `audit_logs` record and derive the flag using an `EXISTS` subquery.
+
 ## Directory Structure
 
 ```

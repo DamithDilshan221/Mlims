@@ -28,7 +28,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
     const { limit, offset } = req.query;
     const pool = getPool(req.user.role_name);
 
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       // If role is statistical, use listPublic
       if (['auditor', 'police', 'court'].includes(req.user.role_name)) {
         const patients = await repo.listPublic(client, limit, offset);
@@ -55,7 +55,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
 router.get('/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const patient = await repo.getById(client, req.params.id);
       if (!patient) return res.status(404).json({ error: 'Patient not found' });
       
@@ -76,7 +76,7 @@ router.get('/:id', validateParams(idParam), async (req, res, next) => {
  * Create patient (admin, records_clerk). 
  * Doctor gets read-only via RLS/views, doesn't create patients directly.
  */
-router.post('/', requireRole('admin', 'records_clerk', 'doctor'), validateBody(patientSchema), async (req, res, next) => {
+router.post('/', requireRole('admin', 'records_clerk'), validateBody(patientSchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
     const data = req.body;

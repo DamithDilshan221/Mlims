@@ -22,7 +22,7 @@ router.use(authenticate);
 router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const specimens = await specimenRepo.listAll(client, req.query.limit, req.query.offset);
       res.json(specimens);
     });
@@ -37,7 +37,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
 router.get('/:id', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const sp = await specimenRepo.getById(client, req.params.id);
       if (!sp) return res.status(404).json({ error: 'Specimen not found' });
       res.json(sp);
@@ -86,7 +86,7 @@ router.patch('/:id', requireRole('admin', 'forensic_staff'), validateParams(idPa
 router.get('/:id/custody', validateParams(idParam), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const chain = await custodyRepo.getBySpecimenId(client, req.params.id);
       res.json(chain);
     });

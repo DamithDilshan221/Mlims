@@ -12,7 +12,9 @@ const ALLOWED_TABLES = [
   'courts',
   'injury_types',
   'weapon_types',
-  'specimen_types'
+  'specimen_types',
+  'roles',
+  'referral_sources'
 ];
 
 function checkTable(tableName) {

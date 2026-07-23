@@ -8,7 +8,8 @@
 
 async function getById(client, mlefId) {
   const { rows } = await client.query(
-    `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name
+    `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name,
+            fn_has_police_copy(ce.mlef_id) AS police_copy_issued
      FROM   clinical_examinations ce
      JOIN   staff s ON ce.doctor_id = s.staff_id
      WHERE  ce.mlef_id = $1`,
@@ -19,7 +20,8 @@ async function getById(client, mlefId) {
 
 async function getByCaseId(client, caseId) {
   const { rows } = await client.query(
-    `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name
+    `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name,
+            fn_has_police_copy(ce.mlef_id) AS police_copy_issued
      FROM   clinical_examinations ce
      JOIN   staff s ON ce.doctor_id = s.staff_id
      WHERE  ce.case_id = $1`,
@@ -34,7 +36,8 @@ async function getByCaseId(client, caseId) {
 async function listAll(client, limit = 50, offset = 0) {
   const { rows } = await client.query(
     `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name,
-            fc.case_number
+            fc.case_number,
+            fn_has_police_copy(ce.mlef_id) AS police_copy_issued
      FROM   clinical_examinations ce
      JOIN   staff s ON ce.doctor_id = s.staff_id
      JOIN   forensic_cases fc ON ce.case_id = fc.case_id
@@ -119,7 +122,16 @@ async function updateReferral(client, referralId, { specialty, referralDate, rev
   return rows[0] || null;
 }
 
+async function issuePoliceCopy(client, mlefId, userId) {
+  // Using the convention of tracking state via audit_logs
+  await client.query(
+    `INSERT INTO audit_logs (user_id, table_name, record_id, action_type, new_payload)
+     VALUES ($1, 'clinical_examinations', $2, 'POLICE_COPY', '{"status": "Issued"}')`,
+    [userId, mlefId]
+  );
+}
+
 module.exports = {
   getById, getByCaseId, listAll, create, update,
-  getReferralsByExamId, createReferral, updateReferral,
+  getReferralsByExamId, createReferral, updateReferral, issuePoliceCopy,
 };

@@ -66,7 +66,7 @@ router.get(['/', '/case/:caseId'], async (req, res, next) => {
     }
 
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM digital_assets WHERE case_id = $1 ORDER BY upload_date DESC`,
         [caseId]
@@ -85,7 +85,7 @@ router.get(['/', '/case/:caseId'], async (req, res, next) => {
 router.get('/:id/content', async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
-    await withClient(pool, async (client) => {
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM digital_assets WHERE asset_id = $1`,
         [req.params.id]

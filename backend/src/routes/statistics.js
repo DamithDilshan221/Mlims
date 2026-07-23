@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticate = require('../middleware/authenticate');
 const { getPool } = require('../db/pools');
+const { withTransaction } = require('../db/transaction');
 
 router.use(authenticate);
 
@@ -10,9 +11,11 @@ router.use(authenticate);
  */
 router.get('/cases-per-month', async (req, res, next) => {
   try {
-    const pool = getPool('admin_role'); // Run as admin for aggregate views
-    const { rows } = await pool.query('SELECT * FROM v_report_monthly_case_counts');
-    res.json(rows);
+    const pool = getPool('admin'); // Run as admin for aggregate views
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const { rows } = await client.query('SELECT * FROM v_report_monthly_case_counts');
+      res.json(rows);
+    });
   } catch (err) {
     next(err);
   }
@@ -23,9 +26,11 @@ router.get('/cases-per-month', async (req, res, next) => {
  */
 router.get('/lab-turnaround', async (req, res, next) => {
   try {
-    const pool = getPool('admin_role');
-    const { rows } = await pool.query('SELECT * FROM v_report_lab_tat');
-    res.json(rows);
+    const pool = getPool('admin');
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const { rows } = await client.query('SELECT * FROM v_report_lab_tat');
+      res.json(rows);
+    });
   } catch (err) {
     next(err);
   }
@@ -44,17 +49,19 @@ router.get('/lab-turnaround', async (req, res, next) => {
  */
 router.get('/cases-by-location', async (req, res, next) => {
   try {
-    const pool = getPool('admin_role');
-    const { rows } = await pool.query(`
-      SELECT 
-        ps.station_name as name,
-        COUNT(c.case_id) as count
-      FROM police_stations ps
-      LEFT JOIN forensic_cases c ON ps.station_id = c.station_id
-      GROUP BY ps.station_name
-      ORDER BY count DESC
-    `);
-    res.json(rows);
+    const pool = getPool('admin');
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const { rows } = await client.query(`
+        SELECT 
+          ps.station_name as name,
+          COUNT(c.case_id) as count
+        FROM police_stations ps
+        LEFT JOIN forensic_cases c ON ps.station_id = c.station_id
+        GROUP BY ps.station_name
+        ORDER BY count DESC
+      `);
+      res.json(rows);
+    });
   } catch (err) {
     next(err);
   }
@@ -66,23 +73,25 @@ router.get('/cases-by-location', async (req, res, next) => {
  */
 router.get('/dashboard', async (req, res, next) => {
   try {
-    const pool = getPool('admin_role'); // Execute aggregate queries safely
+    const pool = getPool('admin'); // Execute aggregate queries safely
     const role = req.user.role_name;
 
-    const [activeUsersRes, lockedUsersRes, openCasesRes, pendingLabsRes, pendingTransfersRes] = await Promise.all([
-      pool.query(`SELECT COUNT(*) FROM users WHERE is_active = true`),
-      pool.query(`SELECT COUNT(*) FROM users WHERE is_active = false`),
-      pool.query(`SELECT COUNT(*) FROM forensic_cases WHERE status != 'closed'`),
-      pool.query(`SELECT COUNT(*) FROM lab_requests WHERE status = 'pending'`),
-      pool.query(`SELECT COUNT(*) FROM chain_of_custody`),
-    ]);
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const [activeUsersRes, lockedUsersRes, openCasesRes, pendingLabsRes, pendingTransfersRes] = await Promise.all([
+        client.query(`SELECT COUNT(*) FROM users WHERE is_active = true`),
+        client.query(`SELECT COUNT(*) FROM users WHERE is_active = false`),
+        client.query(`SELECT COUNT(*) FROM forensic_cases WHERE status != 'closed'`),
+        client.query(`SELECT COUNT(*) FROM lab_requests WHERE status = 'pending'`),
+        client.query(`SELECT COUNT(*) FROM chain_of_custody`),
+      ]);
 
-    res.json({
-      activeUsers: parseInt(activeUsersRes.rows[0].count, 10),
-      lockedAccounts: parseInt(lockedUsersRes.rows[0].count, 10),
-      openCases: parseInt(openCasesRes.rows[0].count, 10),
-      pendingLabs: parseInt(pendingLabsRes.rows[0].count, 10),
-      pendingTransfers: parseInt(pendingTransfersRes.rows[0].count, 10),
+      res.json({
+        activeUsers: parseInt(activeUsersRes.rows[0].count, 10),
+        lockedAccounts: parseInt(lockedUsersRes.rows[0].count, 10),
+        openCases: parseInt(openCasesRes.rows[0].count, 10),
+        pendingLabs: parseInt(pendingLabsRes.rows[0].count, 10),
+        pendingTransfers: parseInt(pendingTransfersRes.rows[0].count, 10),
+      });
     });
   } catch (err) {
     next(err);

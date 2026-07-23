@@ -14,11 +14,25 @@ SELECT
     c.incident_date,
     c.status,
     ps.station_name,
-    p.full_name AS patient_name
+    p.full_name AS patient_name,
+    ce.mlef_id,
+    pm.pmr_id,
+    EXISTS (
+        SELECT 1 FROM audit_logs
+        WHERE table_name = 'clinical_examinations'
+          AND action_type = 'POLICE_COPY'
+          AND record_id = ce.mlef_id
+    ) AS police_copy_issued,
+    mlr.issue_date AS report_issue_date,
+    cr.receipt_id
 FROM forensic_cases c
 JOIN police_stations ps ON c.station_id = ps.station_id
 JOIN patients p ON c.patient_id = p.patient_id
-WHERE c.status IN ('open', 'under_investigation');
+LEFT JOIN clinical_examinations ce ON c.case_id = ce.case_id
+LEFT JOIN postmortem_examinations pm ON c.case_id = pm.case_id
+LEFT JOIN medico_legal_reports mlr ON ce.mlef_id = mlr.mlef_id
+LEFT JOIN court_receipts cr ON (cr.mlr_id = mlr.mlr_id OR cr.pmr_id = pm.pmr_id)
+WHERE c.status IN ('open', 'under_investigation', 'pending_report', 'completed');
 
 GRANT SELECT ON v_report_open_cases TO admin_role, auditor_role, doctor_role;
 
