@@ -30,7 +30,7 @@ router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
 
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       // If role is statistical, use listPublic
-      if (['auditor', 'police', 'court'].includes(req.user.role_name)) {
+      if (['auditor'].includes(req.user.role_name)) {
         const patients = await repo.listPublic(client, limit, offset);
         return res.json(patients);
       }

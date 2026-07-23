@@ -81,12 +81,15 @@ async function main() {
     'V14__clinical_auth_pm_registry_court_summons.sql',
     'V15__add_assigned_doctor_to_case.sql',
     'V16__catchup_missing_migrations.sql',
+
     'V17__fix_sp_register_case_permissions.sql',
     'V18__grant_police_stations_select_to_doctors.sql',
+
     'V19__expand_mlef_form.sql',
     'V20__add_missing_staff_records.sql',
     'V21__reapply_missing_grants.sql',
     'V22__update_seed_mlef_data.sql'
+
   ];
 
   for (const file of migrationFiles) {
@@ -183,3 +186,6 @@ main().catch(err => {
   console.error("Fatal setup error:", err);
   process.exit(1);
 });
+
+
+
