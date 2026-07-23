@@ -10,7 +10,7 @@
 
 async function getRequestById(client, requestId) {
   const { rows } = await client.query(
-    `SELECT lr.*, sp.barcode_id, st.name AS specimen_type_name
+    `SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name
      FROM   lab_requests lr
      JOIN   specimens sp ON lr.specimen_id = sp.specimen_id
      JOIN   specimen_types st ON sp.specimen_type_id = st.specimen_type_id
@@ -26,7 +26,7 @@ async function getRequestById(client, requestId) {
  */
 async function listRequests(client, { status, limit = 50, offset = 0 } = {}) {
   let sql = `
-    SELECT lr.*, sp.barcode_id, st.name AS specimen_type_name
+    SELECT lr.*, sp.barcode_id, sp.case_id, st.name AS specimen_type_name
     FROM   lab_requests lr
     JOIN   specimens sp ON lr.specimen_id = sp.specimen_id
     JOIN   specimen_types st ON sp.specimen_type_id = st.specimen_type_id

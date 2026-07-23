@@ -14,7 +14,7 @@ const AppLayout = ({ children }) => {
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Patients', path: '/patients', icon: Users },
-    { label: 'Cases', path: '/cases/new', icon: FileText, roles: ['admin', 'records_clerk', 'police'] },
+    { label: 'Cases', path: '/cases', icon: FileText, roles: ['admin', 'records_clerk', 'doctor', 'police'] },
     { label: 'Evidence', path: '/evidence', icon: ShieldAlert },
     { label: 'Lab & Tox', path: '/lab-tests', icon: FlaskConical },
     { label: 'Reports', path: '/reports', icon: FileCheck },

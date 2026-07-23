@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import PatientListPage from './pages/PatientListPage';
 import PatientRegistrationPage from './pages/PatientRegistrationPage';
 import PatientDetailsPage from './pages/PatientDetailsPage';
+import CaseListPage from './pages/CaseListPage';
 import CaseRegistrationPage from './pages/CaseRegistrationPage';
 import ClinicalCaseDetailsPage from './pages/ClinicalCaseDetailsPage';
 import PostmortemCaseDetailsPage from './pages/PostmortemCaseDetailsPage';
@@ -64,6 +65,7 @@ function App() {
       <Route path="/patients/:id" element={<ProtectedRoute><PatientDetailsPage /></ProtectedRoute>} />
       
       {/* Cases */}
+      <Route path="/cases" element={<ProtectedRoute><CaseListPage /></ProtectedRoute>} />
       <Route path="/cases/new" element={
         <ProtectedRoute allowedRoles={['admin', 'records_clerk', 'police']}>
           <CaseRegistrationPage />

@@ -7,6 +7,7 @@ import { BookOpen, UserMinus, UploadCloud } from 'lucide-react';
 const PostmortemCaseDetailsPage = () => {
   const { id } = useParams();
   const toast = useToast();
+  const [caseInfo, setCaseInfo] = useState(null);
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -22,24 +23,17 @@ const PostmortemCaseDetailsPage = () => {
   });
 
   useEffect(() => {
-    api.get(`/postmortem-examinations/${id}`)
+    api.get(`/cases/${id}/timeline`)
       .then(res => {
-        setExam(res.data);
-        if (res.data?.authorization_type) setAuthorizationType(res.data.authorization_type);
-        if (res.data?.anatomical_notes) setNotes(res.data.anatomical_notes);
+        setCaseInfo(res.data.case);
+        const match = res.data.postmortem_examination;
+        if (match) {
+          setExam(match);
+          if (match.authorization_type) setAuthorizationType(match.authorization_type);
+          if (match.anatomical_notes) setNotes(match.anatomical_notes);
+        }
       })
-      .catch(() => {
-        api.get(`/postmortem-examinations`)
-          .then(res => {
-            const match = res.data.find(e => e.pmr_id == id || e.case_id == id);
-            if (match) {
-              setExam(match);
-              if (match.authorization_type) setAuthorizationType(match.authorization_type);
-              if (match.anatomical_notes) setNotes(match.anatomical_notes);
-            }
-          })
-          .catch(() => {});
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -79,34 +73,70 @@ const PostmortemCaseDetailsPage = () => {
   };
 
   if (loading) return <div className="p-8">Loading...</div>;
-  if (!exam) return <div className="p-8">Record not found or restricted.</div>;
+  if (!caseInfo) return <div className="p-8">Case record not found or restricted.</div>;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Postmortem Examination (PMR)</h2>
-          <p className="text-slate-500 text-sm mt-1">PMR ID: #{exam.pmr_id} • Inquest: {exam.inquest_no}</p>
+          <h2 className="text-2xl font-bold text-slate-800">Postmortem Case: {caseInfo.patient_name || 'Unknown Subject'}</h2>
+          <p className="text-slate-500 text-sm mt-1">
+            Case ID: CASE-{caseInfo.case_id.toString().padStart(4, '0')} • 
+            {exam ? ` PMR ID: #${exam.pmr_id} • Inquest: ${exam.inquest_no}` : ' No Exam Record Yet'}
+          </p>
         </div>
-        <div className="space-x-3">
-          <Link to={`/exam-injury?pmrId=${exam.pmr_id}`} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium">
-            Add Injury
-          </Link>
-          <button onClick={saveNotes} className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium">
-            Save Notes
-          </button>
-        </div>
+        {exam && (
+          <div className="space-x-3">
+            <Link to={`/exam-injury?pmrId=${exam.pmr_id}`} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium">
+              Add Injury
+            </Link>
+            <button onClick={saveNotes} className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium">
+              Save Notes
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Basic Info & Authorization */}
+        {/* Case Info */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
             <UserMinus className="w-5 h-5 mr-2 text-slate-500" />
-            <h3 className="font-semibold text-slate-800">Death Details</h3>
+            <h3 className="font-semibold text-slate-800">Case Information</h3>
           </div>
           <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="block text-xs font-medium text-slate-500 mb-1">Incident Date</span>
+                <span className="text-slate-900 font-medium">{caseInfo.incident_date ? new Date(caseInfo.incident_date).toLocaleDateString() : '--'}</span>
+              </div>
+              <div>
+                <span className="block text-xs font-medium text-slate-500 mb-1">Police Station</span>
+                <span className="text-slate-900 font-medium">{caseInfo.station_name || '--'}</span>
+              </div>
+              <div className="col-span-2">
+                <span className="block text-xs font-medium text-slate-500 mb-1">Incident Location</span>
+                <span className="text-slate-900 font-medium">{caseInfo.incident_location || '--'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {!exam ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 flex flex-col justify-center items-center text-center">
+            <h3 className="text-amber-800 font-bold mb-2">Examination Not Initiated</h3>
+            <p className="text-amber-700 text-sm">A doctor has not yet created the postmortem examination file for this case.</p>
+          </div>
+        ) : (
+          <>
+            {/* Basic Info & Authorization */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
+                <UserMinus className="w-5 h-5 mr-2 text-slate-500" />
+                <h3 className="font-semibold text-slate-800">Death Details</h3>
+              </div>
+              <div className="p-6 space-y-4">
             <div className="mb-6 pb-6 border-b border-slate-100">
               <label className="block text-xs font-medium text-slate-700 mb-2">Authorization Type *</label>
               <select 
@@ -169,7 +199,8 @@ const PostmortemCaseDetailsPage = () => {
             ))}
           </div>
         </div>
-
+          </>
+        )}
       </div>
     </div>
   );
