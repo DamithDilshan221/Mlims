@@ -45,6 +45,8 @@ const DashboardPage = () => {
     }
   }, [user.role, user.staff_id]);
 
+  
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const allEvents = [
     ...trialCalendar.mlrTrials.map(t => ({ ...t, source: 'MLR Trial' })),
