@@ -1,3 +1,34 @@
+async function listAll(client, limit = 50, offset = 0) {
+  const { rows } = await client.query(
+    `SELECT cs.*, c.court_name, fc.case_number, fc.case_type,
+            p.full_name AS patient_name
+     FROM   court_summons cs
+     JOIN   courts c ON cs.court_id = c.court_id
+     JOIN   forensic_cases fc ON cs.case_id = fc.case_id
+     JOIN   patients p ON fc.patient_id = p.patient_id
+     ORDER BY cs.issue_date DESC
+     LIMIT  $1 OFFSET $2`,
+    [limit, offset]
+  );
+  return rows;
+}
+
+async function listUpcoming(client, days = 30) {
+  const { rows } = await client.query(
+    `SELECT cs.*, c.court_name, fc.case_number, fc.case_type,
+            p.full_name AS patient_name
+     FROM   court_summons cs
+     JOIN   courts c ON cs.court_id = c.court_id
+     JOIN   forensic_cases fc ON cs.case_id = fc.case_id
+     JOIN   patients p ON fc.patient_id = p.patient_id
+     WHERE  cs.appearance_date IS NOT NULL
+       AND  cs.appearance_date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($1 || ' days')::INTERVAL
+     ORDER BY cs.appearance_date`,
+    [days]
+  );
+  return rows;
+}
+
 async function listByCaseId(client, caseId) {
   const { rows } = await client.query(
     `SELECT cs.*, c.court_name
@@ -12,9 +43,10 @@ async function listByCaseId(client, caseId) {
 
 async function getById(client, summonsId) {
   const { rows } = await client.query(
-    `SELECT cs.*, c.court_name
+    `SELECT cs.*, c.court_name, fc.case_number, fc.case_type
      FROM   court_summons cs
      JOIN   courts c ON cs.court_id = c.court_id
+     JOIN   forensic_cases fc ON cs.case_id = fc.case_id
      WHERE  cs.summons_id = $1`,
     [summonsId]
   );
@@ -55,4 +87,4 @@ async function update(client, summonsId, data) {
   return rows[0] || null;
 }
 
-module.exports = { listByCaseId, getById, create, update };
+module.exports = { listAll, listUpcoming, listByCaseId, getById, create, update };
