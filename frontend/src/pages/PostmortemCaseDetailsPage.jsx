@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useToast } from '../context/ToastContext';
 import { BookOpen, UserMinus } from 'lucide-react';
 
 const PostmortemCaseDetailsPage = () => {
   const { id } = useParams();
+  const toast = useToast();
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,13 +18,21 @@ const PostmortemCaseDetailsPage = () => {
   });
 
   useEffect(() => {
-    api.get(`/postmortem-examinations`)
+    api.get(`/postmortem-examinations/${id}`)
       .then(res => {
-        const match = res.data.find(e => e.pmr_id == id);
-        if (match) {
-          setExam(match);
-          if (match.anatomical_notes) setNotes(match.anatomical_notes);
-        }
+        setExam(res.data);
+        if (res.data?.anatomical_notes) setNotes(res.data.anatomical_notes);
+      })
+      .catch(() => {
+        api.get(`/postmortem-examinations`)
+          .then(res => {
+            const match = res.data.find(e => e.pmr_id == id || e.case_id == id);
+            if (match) {
+              setExam(match);
+              if (match.anatomical_notes) setNotes(match.anatomical_notes);
+            }
+          })
+          .catch(() => {});
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -30,9 +40,9 @@ const PostmortemCaseDetailsPage = () => {
   const saveNotes = async () => {
     try {
       await api.patch(`/postmortem-examinations/${id}`, { anatomicalNotes: notes });
-      alert("Notes saved successfully");
+      toast.success("Anatomical notes saved successfully.");
     } catch (err) {
-      alert("Failed to save notes");
+      toast.error("Failed to save notes.");
     }
   };
 

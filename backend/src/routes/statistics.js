@@ -60,4 +60,33 @@ router.get('/cases-by-location', async (req, res, next) => {
   }
 });
 
+/**
+ * GET /statistics/dashboard
+ * Aggregates role-specific counts for the main dashboard widgets.
+ */
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    const pool = getPool('admin_role'); // Execute aggregate queries safely
+    const role = req.user.role_name;
+
+    const [activeUsersRes, lockedUsersRes, openCasesRes, pendingLabsRes, pendingTransfersRes] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FROM users WHERE is_active = true`),
+      pool.query(`SELECT COUNT(*) FROM users WHERE is_active = false`),
+      pool.query(`SELECT COUNT(*) FROM forensic_cases WHERE status != 'closed'`),
+      pool.query(`SELECT COUNT(*) FROM lab_requests WHERE status = 'pending'`),
+      pool.query(`SELECT COUNT(*) FROM chain_of_custody`),
+    ]);
+
+    res.json({
+      activeUsers: parseInt(activeUsersRes.rows[0].count, 10),
+      lockedAccounts: parseInt(lockedUsersRes.rows[0].count, 10),
+      openCases: parseInt(openCasesRes.rows[0].count, 10),
+      pendingLabs: parseInt(pendingLabsRes.rows[0].count, 10),
+      pendingTransfers: parseInt(pendingTransfersRes.rows[0].count, 10),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

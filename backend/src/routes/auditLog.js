@@ -19,15 +19,17 @@ router.use(authenticate);
 
 const auditQuerySchema = paginationQuery.extend({
   userId: z.coerce.number().positive().optional(),
+  table: z.string().optional(),
+  action: z.string().optional(),
   startDate: z.string().date().optional(),
   endDate: z.string().date().optional(),
 });
 
 /**
- * GET /audit-log
+ * GET /audit-log or GET /audit-logs
  * Only auditor and admin roles can view the audit trail.
  */
-router.get('/audit-log', requireRole('admin', 'auditor'), validateQuery(auditQuerySchema), async (req, res, next) => {
+router.get(['/audit-log', '/audit-logs'], requireRole('admin', 'auditor'), validateQuery(auditQuerySchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
     await withClient(pool, async (client) => {

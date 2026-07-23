@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import clsx from 'clsx';
 import { CheckCircle2, Clock } from 'lucide-react';
 
 const LabTestPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,12 +25,14 @@ const LabTestPage = () => {
     e.preventDefault();
     try {
       await api.patch(`/lab-requests/${activeRequest}/finalize`, resultData);
+      toast.success("Lab result finalized successfully.");
       setActiveRequest(null);
+      setResultData({ findings: '', diagnosis: '' });
       // Reload
       const res = await api.get('/lab-requests');
       setRequests(res.data);
     } catch (err) {
-      alert("Failed to finalize result.");
+      toast.error("Failed to finalize result.");
     }
   };
 

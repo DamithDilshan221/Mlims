@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Printer, Save, FileCheck, Landmark } from 'lucide-react';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
 
 const ReportGenerationPage = () => {
   const { type, id } = useParams();
   const { user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   
   const [data, setData] = useState(null);
@@ -26,17 +28,14 @@ const ReportGenerationPage = () => {
   const isDoctorOrAdmin = ['doctor', 'admin'].includes(user.role);
 
   useEffect(() => {
-    // Fetch data based on type
     const endpoint = type === 'clinical' ? `/clinical-examinations/${id}` : `/postmortem-examinations/${id}`;
     
-    // For prototype, simulating the fetch
     api.get(endpoint)
       .then(res => {
-        // If the backend returned an array vs object depending on endpoint design
         const item = Array.isArray(res.data) ? res.data.find(e => (e.mlef_id || e.pmr_id) == id) : res.data;
         setData(item);
         if (type === 'clinical' && item?.mlr) {
-          setClinicalDraft(item.mlr); // prefill draft
+          setClinicalDraft(item.mlr);
         }
       })
       .catch(() => {})
@@ -46,9 +45,9 @@ const ReportGenerationPage = () => {
   const handleSaveDraft = async () => {
     try {
       await api.patch(`/reports/clinical/${id}/draft`, clinicalDraft);
-      alert("Draft saved successfully.");
+      toast.success("Draft saved successfully.");
     } catch {
-      alert("Failed to save draft.");
+      toast.error("Failed to save draft.");
     }
   };
 
@@ -56,21 +55,20 @@ const ReportGenerationPage = () => {
     if (!window.confirm("Are you sure? Issuing the report locks it.")) return;
     try {
       await api.post(`/reports/clinical/${id}/issue`);
-      alert("Report issued.");
+      toast.success("Report issued successfully.");
       navigate('/reports');
     } catch {
-      alert("Failed to issue.");
+      toast.error("Failed to issue report.");
     }
   };
 
   const handleCourtAcknowledgment = async () => {
     try {
-      // Calls sp_issue_court_receipt via the backend
       await api.post(`/reports/${type}/${id}/acknowledge`);
-      alert("Court Receipt Issued Successfully.");
+      toast.success("Court Receipt Issued Successfully.");
       navigate('/reports');
     } catch {
-      alert("Failed to issue receipt.");
+      toast.error("Failed to issue receipt.");
     }
   };
 

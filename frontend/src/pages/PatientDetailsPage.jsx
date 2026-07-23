@@ -7,11 +7,18 @@ import { User, Activity, MapPin, Hash, FileText } from 'lucide-react';
 const PatientDetailsPage = () => {
   const { id } = useParams();
   const [patient, setPatient] = useState(null);
+  const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/patients/${id}`)
-      .then(res => setPatient(res.data))
+    Promise.all([
+      api.get(`/patients/${id}`),
+      api.get(`/cases?patientId=${id}`)
+    ])
+      .then(([patientRes, casesRes]) => {
+        setPatient(patientRes.data);
+        setCases(casesRes.data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -63,13 +70,30 @@ const PatientDetailsPage = () => {
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-slate-800 flex items-center">
             <FileText className="w-5 h-5 mr-2 text-slate-500" />
-            Linked Forensic Cases
+            Linked Forensic Cases ({cases.length})
           </h3>
+          <Link to="/cases/new" className="text-xs font-semibold text-primary-600 hover:text-primary-800">
+            + New Case
+          </Link>
         </div>
-        <div className="divide-y divide-slate-100 p-6">
-          <p className="text-slate-500 text-sm">
-            (In a full implementation, this section would render the list of cases tied to this patient ID.)
-          </p>
+        <div className="divide-y divide-slate-100">
+          {cases.length === 0 ? (
+            <p className="p-6 text-slate-500 text-sm">No forensic cases currently linked to this patient.</p>
+          ) : (
+            cases.map(c => (
+              <div key={c.case_id} className="p-4 hover:bg-slate-50 flex justify-between items-center">
+                <div>
+                  <Link to={`/cases/${c.case_type}/${c.case_id}`} className="font-bold text-slate-800 hover:text-primary-600">
+                    {c.case_number}
+                  </Link>
+                  <p className="text-xs text-slate-500 mt-0.5 capitalize">Type: {c.case_type} • Location: {c.incident_location || 'N/A'}</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                  {c.status}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

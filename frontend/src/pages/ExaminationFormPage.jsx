@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { AlertCircle } from 'lucide-react';
@@ -12,16 +12,34 @@ const ExaminationFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  const [injuryTypes, setInjuryTypes] = useState([]);
+  const [weaponTypes, setWeaponTypes] = useState([]);
+
   const [formData, setFormData] = useState({
-    injuryTypeId: 1, // Mock lookup ID for prototype
+    injuryTypeId: '',
+    weaponTypeId: '',
     bodyPart: '',
     sizeAndShape: '',
     categoryOfHurt: 'simple'
   });
 
+  useEffect(() => {
+    Promise.all([
+      api.get('/lookups/injury_types'),
+      api.get('/lookups/weapon_types')
+    ]).then(([injRes, wpnRes]) => {
+      setInjuryTypes(injRes.data);
+      setWeaponTypes(wpnRes.data);
+      if (injRes.data.length > 0) {
+        setFormData(prev => ({ ...prev, injuryTypeId: injRes.data[0].injury_type_id }));
+      }
+    }).catch(() => {});
+  }, []);
+
   const fillDummyData = () => {
     setFormData({
-      injuryTypeId: 1,
+      injuryTypeId: injuryTypes[0]?.injury_type_id || 1,
+      weaponTypeId: weaponTypes[0]?.weapon_type_id || '',
       bodyPart: 'Left Forearm',
       sizeAndShape: '3cm linear abrasion',
       categoryOfHurt: 'simple'
@@ -33,16 +51,16 @@ const ExaminationFormPage = () => {
     setLoading(true);
     setError(null);
 
-    // Context determines payload to satisfy DB XOR constraint
     const payload = {
       ...formData,
-      mlefId: mlefId ? parseInt(mlefId) : undefined,
-      pmrId: pmrId ? parseInt(pmrId) : undefined
+      injuryTypeId: parseInt(formData.injuryTypeId, 10),
+      weaponTypeId: formData.weaponTypeId ? parseInt(formData.weaponTypeId, 10) : undefined,
+      mlefId: mlefId ? parseInt(mlefId, 10) : undefined,
+      pmrId: pmrId ? parseInt(pmrId, 10) : undefined
     };
 
     try {
       await api.post('/exam-injuries', payload);
-      // Navigate back
       navigate(-1);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to save injury.");
@@ -60,13 +78,15 @@ const ExaminationFormPage = () => {
               Attaching to {mlefId ? `Clinical Exam #${mlefId}` : `Postmortem Exam #${pmrId}`}
             </p>
           </div>
-          <button 
-            type="button" 
-            onClick={fillDummyData}
-            className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
-          >
-            Fill Dummy Data
-          </button>
+          {import.meta.env.DEV && (
+            <button 
+              type="button" 
+              onClick={fillDummyData}
+              className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
+            >
+              Fill Dummy Data
+            </button>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -78,6 +98,36 @@ const ExaminationFormPage = () => {
           )}
           
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Injury Type *</label>
+                <select
+                  required
+                  value={formData.injuryTypeId}
+                  onChange={e => setFormData({...formData, injuryTypeId: e.target.value})}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary-500"
+                >
+                  {injuryTypes.map(it => (
+                    <option key={it.injury_type_id} value={it.injury_type_id}>{it.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Weapon Type (Optional)</label>
+                <select
+                  value={formData.weaponTypeId}
+                  onChange={e => setFormData({...formData, weaponTypeId: e.target.value})}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-primary-500"
+                >
+                  <option value="">None / Unknown</option>
+                  {weaponTypes.map(wt => (
+                    <option key={wt.weapon_type_id} value={wt.weapon_type_id}>{wt.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Body Part</label>
               <input 

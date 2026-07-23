@@ -12,14 +12,17 @@ const ClinicalCaseDetailsPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Uses RLS. If Doctor doesn't own this, it returns 404 or empty.
-    api.get(`/clinical-examinations`)
-      .then(res => {
-        const match = res.data.find(e => e.mlef_id == id);
-        if (match) setExam(match);
-        else setError("Examination not found or you don't have access.");
+    api.get(`/clinical-examinations/${id}`)
+      .then(res => setExam(res.data))
+      .catch(() => {
+        api.get(`/clinical-examinations`)
+          .then(res => {
+            const match = res.data.find(e => e.mlef_id == id || e.case_id == id);
+            if (match) setExam(match);
+            else setError("Examination not found or you don't have access.");
+          })
+          .catch(() => setError("Failed to load examination."));
       })
-      .catch(() => setError("Failed to load examination."))
       .finally(() => setLoading(false));
   }, [id]);
 

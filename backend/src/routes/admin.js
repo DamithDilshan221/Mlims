@@ -71,16 +71,55 @@ router.delete('/users/:id', validateParams(idParam), async (req, res, next) => {
   }
 });
 
-// ── Staff ──────────────────────────────────────────────────────────────────
+/**
+ * PATCH /admin/users/:id
+ * Updates user status (unlock/activate/deactivate) or resets password.
+ */
+router.patch('/users/:id', validateParams(idParam), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    const userId = req.params.id;
+    const { isActive, password } = req.body;
 
-const staffSchema = z.object({
-  userId: z.number().positive(),
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().min(1).max(100),
-  designation: z.string().max(100).optional().nullable(),
-  contactNo: z.string().max(20).optional().nullable(),
-  slmcRegNo: z.string().max(50).optional().nullable(),
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      if (password) {
+        const salt = await bcrypt.genSalt(12);
+        const passwordHash = await bcrypt.hash(password, salt);
+        await client.query(`UPDATE users SET password_hash = $1 WHERE user_id = $2`, [passwordHash, userId]);
+      }
+      if (typeof isActive === 'boolean') {
+        await client.query(`UPDATE users SET is_active = $1 WHERE user_id = $2`, [isActive, userId]);
+      }
+      res.json({ message: 'User updated successfully.' });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
+
+/**
+ * PATCH /admin/roles/:id
+ * Updates role description.
+ */
+router.patch('/roles/:id', validateParams(idParam), async (req, res, next) => {
+  try {
+    const pool = getPool(req.user.role_name);
+    const roleId = req.params.id;
+    const { description } = req.body;
+
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      const { rows } = await client.query(
+        `UPDATE roles SET description = $1 WHERE role_id = $2 RETURNING *`,
+        [description, roleId]
+      );
+      res.json(rows[0]);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Staff ──────────────────────────────────────────────────────────────────
 
 router.get('/staff', validateQuery(paginationQuery), async (req, res, next) => {
   try {
@@ -94,11 +133,35 @@ router.get('/staff', validateQuery(paginationQuery), async (req, res, next) => {
   }
 });
 
-router.post('/staff', validateBody(staffSchema), async (req, res, next) => {
+/**
+ * POST /admin/staff
+ * Transactionally creates user account AND staff profile if credentials provided.
+ */
+router.post('/staff', async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
+    const { username, password, role_id, roleId, first_name, firstName, last_name, lastName, designation, contact_no, contactNo, slmc_reg_no, slmcRegNo, userId } = req.body;
+
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
-      const staff = await staffRepo.create(client, req.body);
+      let targetUserId = userId;
+
+      if (!targetUserId && username && password) {
+        const rId = role_id || roleId || 2;
+        const salt = await bcrypt.genSalt(12);
+        const passwordHash = await bcrypt.hash(password, salt);
+        const newUser = await userRepo.create(client, { roleId: rId, username, passwordHash });
+        targetUserId = newUser.user_id;
+      }
+
+      const staff = await staffRepo.create(client, {
+        userId: targetUserId,
+        firstName: first_name || firstName,
+        lastName: last_name || lastName,
+        designation,
+        contactNo: contact_no || contactNo,
+        slmcRegNo: slmc_reg_no || slmcRegNo,
+      });
+
       res.status(201).json(staff);
     });
   } catch (err) {

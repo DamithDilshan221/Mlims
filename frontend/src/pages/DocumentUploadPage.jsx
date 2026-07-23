@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
 import { UploadCloud, File, Image as ImageIcon, X } from 'lucide-react';
 
 const DocumentUploadPage = () => {
   const { id: caseId } = useParams();
   const { user } = useAuth();
+  const toast = useToast();
   
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,6 @@ const DocumentUploadPage = () => {
       const docsWithUploader = await Promise.all(res.data.map(async (doc) => {
         try {
           const auditRes = await api.get(`/audit-logs?table=digital_assets&action=INSERT&recordId=${doc.asset_id}`);
-          // Fallback to "System" if no audit log is found
           doc.uploadedBy = auditRes.data.length > 0 ? `User ID: ${auditRes.data[0].user_id}` : 'System';
         } catch {
           doc.uploadedBy = 'Unknown';
@@ -51,7 +52,7 @@ const DocumentUploadPage = () => {
     const ext = file.name.split('.').pop().toLowerCase();
     
     if (!allowedExtensions.includes(ext)) {
-      alert("Invalid file type. Allowed: PDF, JPG, PNG, DOCX.");
+      toast.error("Invalid file type. Allowed: PDF, JPG, PNG, DOCX.");
       return;
     }
 
@@ -65,9 +66,10 @@ const DocumentUploadPage = () => {
       await api.post('/digital-assets', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      toast.success("Document uploaded successfully.");
       fetchDocuments(); // Refresh list
     } catch (err) {
-      alert("Upload failed.");
+      toast.error("Upload failed.");
     } finally {
       setUploading(false);
       e.target.value = null; // reset input

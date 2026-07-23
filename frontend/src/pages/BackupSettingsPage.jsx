@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
+import { useToast } from '../context/ToastContext';
 import { Database, HardDrive, Settings as SettingsIcon, CheckCircle2, XCircle } from 'lucide-react';
 import clsx from 'clsx';
 
 const BackupSettingsPage = () => {
+  const toast = useToast();
   const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
@@ -14,7 +16,6 @@ const BackupSettingsPage = () => {
 
   const fetchBackups = async () => {
     try {
-      // Backup events are recorded in audit logs with table_name = 'SYSTEM_BACKUP'
       const res = await api.get('/audit-logs?table=SYSTEM_BACKUP&limit=20');
       setBackups(res.data);
     } catch (err) {
@@ -29,14 +30,11 @@ const BackupSettingsPage = () => {
     
     setTriggering(true);
     try {
-      // Calls the async endpoint that enqueues the backup script
       await api.post('/admin/backup');
-      alert("Backup enqueued successfully. It will appear in the log shortly.");
-      
-      // Poll once after 3 seconds to update the UI with the simulation result
+      toast.success("Backup enqueued successfully. It will appear in the log shortly.");
       setTimeout(fetchBackups, 3000);
     } catch (err) {
-      alert("Failed to enqueue backup.");
+      toast.error("Failed to enqueue backup.");
     } finally {
       setTriggering(false);
     }

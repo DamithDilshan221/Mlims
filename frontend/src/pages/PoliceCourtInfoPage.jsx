@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
 import { Building2, Shield, PlusCircle, Edit } from 'lucide-react';
 
 const PoliceCourtInfoPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
   
   const [stations, setStations] = useState([]);
   const [courts, setCourts] = useState([]);
@@ -15,11 +17,13 @@ const PoliceCourtInfoPage = () => {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
-    // In a real app, this might be multiple endpoints or a generic lookup.
-    // We assume /lookups handles this.
+    fetchDirectories();
+  }, []);
+
+  const fetchDirectories = () => {
     Promise.all([
-      api.get('/lookups?type=police_stations'),
-      api.get('/lookups?type=courts')
+      api.get('/lookups/police_stations'),
+      api.get('/lookups/courts')
     ])
     .then(([stationRes, courtRes]) => {
       setStations(stationRes.data);
@@ -27,7 +31,7 @@ const PoliceCourtInfoPage = () => {
     })
     .catch(() => {})
     .finally(() => setLoading(false));
-  }, []);
+  };
 
   const openForm = (type, existingData = null) => {
     setActiveForm(type);
@@ -41,13 +45,24 @@ const PoliceCourtInfoPage = () => {
   const submitForm = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = activeForm === 'station' ? '/admin/stations' : '/admin/courts';
-      // In a real app, distinguish between POST and PATCH based on existence of ID
-      await api.post(endpoint, formData);
-      alert("Saved successfully!");
+      const isStation = activeForm === 'station';
+      const table = isStation ? 'police_stations' : 'courts';
+      const id = isStation ? formData.station_id : formData.court_id;
+
+      if (id) {
+        // Edit mode (PATCH)
+        await api.patch(`/lookups/${table}/${id}`, formData);
+        toast.success(`Updated ${isStation ? 'police station' : 'court'} successfully.`);
+      } else {
+        // Create mode (POST)
+        await api.post(`/lookups/${table}`, formData);
+        toast.success(`Added new ${isStation ? 'police station' : 'court'} successfully.`);
+      }
+
       setActiveForm(null);
+      fetchDirectories();
     } catch (err) {
-      alert("Failed to save.");
+      toast.error(err.response?.data?.error || "Failed to save record.");
     }
   };
 

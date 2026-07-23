@@ -74,13 +74,15 @@ const PatientRegistrationPage = () => {
             <h2 className="text-xl font-bold text-slate-800">Register New Patient</h2>
             <p className="text-sm text-slate-500 mt-1">Enter demographic and identity details.</p>
           </div>
-          <button 
-            type="button" 
-            onClick={fillDummyData}
-            className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
-          >
-            Fill Dummy Data
-          </button>
+          {import.meta.env.DEV && (
+            <button 
+              type="button" 
+              onClick={fillDummyData}
+              className="px-3 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded hover:bg-slate-300 transition-colors"
+            >
+              Fill Dummy Data
+            </button>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
