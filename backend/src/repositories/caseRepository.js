@@ -16,10 +16,12 @@
  */
 async function getById(client, caseId) {
   const { rows } = await client.query(
-    `SELECT fc.*, p.full_name AS patient_name, ps.station_name
+    `SELECT fc.*, p.full_name AS patient_name, ps.station_name,
+            s.first_name || ' ' || s.last_name AS assigned_doctor_name
      FROM   forensic_cases fc
      JOIN   patients p ON fc.patient_id = p.patient_id
      JOIN   police_stations ps ON fc.station_id = ps.station_id
+     LEFT JOIN staff s ON fc.assigned_doctor_id = s.staff_id
      WHERE  fc.case_id = $1`,
     [caseId]
   );
@@ -66,10 +68,10 @@ async function listAll(client, { caseType, status, patientId, limit = 50, offset
  *
  * SQL: SELECT * FROM sp_register_case($1, $2, $3, $4, $5)
  */
-async function registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId = null) {
+async function registerCase(client, patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId = null, doctorId = null) {
   const { rows } = await client.query(
-    `SELECT * FROM sp_register_case($1, $2, $3, $4, $5, $6)`,
-    [patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId]
+    `SELECT * FROM sp_register_case($1, $2, $3, $4, $5, $6, $7)`,
+    [patientId, stationId, caseType, incidentDate, incidentLocation, referralSourceId, doctorId]
   );
   return rows[0]; // { p_case_id }
 }

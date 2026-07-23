@@ -15,6 +15,7 @@ const registerCaseSchema = z.object({
   patientId: z.number().positive(),
   stationId: z.number().positive(),
   referralSourceId: z.number().positive().optional().nullable(),
+  doctorId: z.number().positive().optional().nullable(),
   caseType: z.enum(['clinical', 'postmortem']),
   incidentDate: z.string().date(),
   incidentLocation: sanitizedString.min(1).max(255),

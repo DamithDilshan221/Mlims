@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
-import { BookOpen, UserMinus, UploadCloud } from 'lucide-react';
+import { BookOpen, UserMinus, UploadCloud, UserCheck, Activity } from 'lucide-react';
 
 const PostmortemCaseDetailsPage = () => {
   const { id } = useParams();
@@ -22,6 +22,15 @@ const PostmortemCaseDetailsPage = () => {
     abdomen: ''
   });
 
+  // Cause of Death
+  const [causeOfDeath, setCauseOfDeath] = useState(null);
+  const [codForm, setCodForm] = useState({ immediateCause: '', antecedentCause: '', contributory: '', underInvestigation: false });
+
+  // Deceased Identifications
+  const [identifications, setIdentifications] = useState([]);
+  const [showIdForm, setShowIdForm] = useState(false);
+  const [idForm, setIdForm] = useState({ identifierName: '', identifierAddress: '', relationship: '', nic: '' });
+
   useEffect(() => {
     api.get(`/cases/${id}/timeline`)
       .then(res => {
@@ -31,6 +40,19 @@ const PostmortemCaseDetailsPage = () => {
           setExam(match);
           if (match.authorization_type) setAuthorizationType(match.authorization_type);
           if (match.anatomical_notes) setNotes(match.anatomical_notes);
+          // Fetch cause of death and identifications
+          api.get(`/postmortem-examinations/${match.pmr_id}/cause-of-death`).then(r => {
+            if (r.data && r.data.cod_id) {
+              setCauseOfDeath(r.data);
+              setCodForm({
+                immediateCause: r.data.immediate_cause || '',
+                antecedentCause: r.data.antecedent_cause || '',
+                contributory: r.data.contributory || '',
+                underInvestigation: r.data.under_investigation || false,
+              });
+            }
+          }).catch(() => {});
+          api.get(`/postmortem-examinations/${match.pmr_id}/identifications`).then(r => setIdentifications(r.data)).catch(() => {});
         }
       })
       .catch(() => {})
@@ -46,6 +68,35 @@ const PostmortemCaseDetailsPage = () => {
       toast.success("Postmortem details saved successfully.");
     } catch (err) {
       toast.error("Failed to save details.");
+    }
+  };
+
+  const saveCauseOfDeath = async () => {
+    if (!exam) return;
+    try {
+      if (causeOfDeath) {
+        await api.patch(`/postmortem-examinations/${exam.pmr_id}/cause-of-death/${causeOfDeath.cod_id}`, codForm);
+        toast.success("Cause of death updated.");
+      } else {
+        const res = await api.post(`/postmortem-examinations/${exam.pmr_id}/cause-of-death`, codForm);
+        setCauseOfDeath(res.data);
+        toast.success("Cause of death recorded.");
+      }
+    } catch (err) {
+      toast.error("Failed to save cause of death.");
+    }
+  };
+
+  const addIdentification = async () => {
+    if (!exam || !idForm.identifierName.trim()) return;
+    try {
+      const res = await api.post(`/postmortem-examinations/${exam.pmr_id}/identifications`, idForm);
+      setIdentifications(prev => [...prev, res.data]);
+      setIdForm({ identifierName: '', identifierAddress: '', relationship: '', nic: '' });
+      setShowIdForm(false);
+      toast.success("Identifier added.");
+    } catch (err) {
+      toast.error("Failed to add identifier.");
     }
   };
 
@@ -68,7 +119,7 @@ const PostmortemCaseDetailsPage = () => {
       toast.error("Upload failed.");
     } finally {
       setUploading(false);
-      e.target.value = null; // reset input
+      e.target.value = null;
     }
   };
 
@@ -130,75 +181,179 @@ const PostmortemCaseDetailsPage = () => {
           </div>
         ) : (
           <>
-            {/* Basic Info & Authorization */}
+            {/* Death Details & Authorization */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
               <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
                 <UserMinus className="w-5 h-5 mr-2 text-slate-500" />
                 <h3 className="font-semibold text-slate-800">Death Details</h3>
               </div>
               <div className="p-6 space-y-4">
-            <div className="mb-6 pb-6 border-b border-slate-100">
-              <label className="block text-xs font-medium text-slate-700 mb-2">Authorization Type *</label>
-              <select 
-                value={authorizationType}
-                onChange={e => setAuthorizationType(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-primary-500 focus:border-primary-500 mb-4"
-              >
-                <option value="">Select Authorization...</option>
-                <option value="police_inquest">Police Inquest Order</option>
-                <option value="magistrate_court_order">Magistrate / Court Order</option>
-              </select>
+                <div className="mb-6 pb-6 border-b border-slate-100">
+                  <label className="block text-xs font-medium text-slate-700 mb-2">Authorization Type *</label>
+                  <select 
+                    value={authorizationType}
+                    onChange={e => setAuthorizationType(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-primary-500 focus:border-primary-500 mb-4"
+                  >
+                    <option value="">Select Authorization...</option>
+                    <option value="police_inquest">Police Inquest Order</option>
+                    <option value="magistrate_court_order">Magistrate / Court Order</option>
+                  </select>
 
-              {authorizationType && (
-                <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex justify-between items-center">
-                  <div>
-                    <h4 className="text-sm font-semibold text-blue-900">Supporting Document</h4>
-                    <p className="text-xs text-blue-700 mt-1">Please upload the official {authorizationType === 'police_inquest' ? 'inquest' : 'court'} order.</p>
-                  </div>
-                  <label className="cursor-pointer px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 shadow-sm flex items-center">
-                    {uploading ? 'Uploading...' : <><UploadCloud className="w-4 h-4 mr-1.5" /> Upload</>}
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={handleFileUpload} disabled={uploading} />
-                  </label>
+                  {authorizationType && (
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex justify-between items-center">
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-900">Supporting Document</h4>
+                        <p className="text-xs text-blue-700 mt-1">Please upload the official {authorizationType === 'police_inquest' ? 'inquest' : 'court'} order.</p>
+                      </div>
+                      <label className="cursor-pointer px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 shadow-sm flex items-center">
+                        {uploading ? 'Uploading...' : <><UploadCloud className="w-4 h-4 mr-1.5" /> Upload</>}
+                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.docx" onChange={handleFileUpload} disabled={uploading} />
+                      </label>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="block text-xs font-medium text-slate-500 mb-1">Manner of Death</span>
+                    <span className="text-slate-900 font-medium capitalize">{exam.manner_of_death?.replace('_', ' ') || '--'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-medium text-slate-500 mb-1">Rigor Mortis</span>
+                    <span className="text-slate-900 font-medium capitalize">{exam.rigor_mortis?.replace('_', ' ') || '--'}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="block text-xs font-medium text-slate-500 mb-1">Manner of Death</span>
-                <span className="text-slate-900 font-medium capitalize">{exam.manner_of_death?.replace('_', ' ') || '--'}</span>
+            {/* Anatomical Notes JSON Builder */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
+                <BookOpen className="w-5 h-5 mr-2 text-slate-500" />
+                <h3 className="font-semibold text-slate-800">Anatomical Notes Builder</h3>
               </div>
-              <div>
-                <span className="block text-xs font-medium text-slate-500 mb-1">Rigor Mortis</span>
-                <span className="text-slate-900 font-medium capitalize">{exam.rigor_mortis?.replace('_', ' ') || '--'}</span>
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-slate-500 mb-4">These fields are serialized directly to the JSONB column.</p>
+                {['head', 'chest', 'abdomen'].map(region => (
+                  <div key={region}>
+                    <label className="block text-xs font-medium text-slate-700 capitalize mb-1">{region}</label>
+                    <textarea 
+                      rows="2"
+                      value={notes[region]} 
+                      onChange={e => setNotes({...notes, [region]: e.target.value})}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-primary-500 focus:border-primary-500" 
+                      placeholder={`Notes for ${region}...`}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Anatomical Notes JSON Builder */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
-            <BookOpen className="w-5 h-5 mr-2 text-slate-500" />
-            <h3 className="font-semibold text-slate-800">Anatomical Notes Builder</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            <p className="text-xs text-slate-500 mb-4">These fields are serialized directly to the JSONB column.</p>
-            
-            {['head', 'chest', 'abdomen'].map(region => (
-              <div key={region}>
-                <label className="block text-xs font-medium text-slate-700 capitalize mb-1">{region}</label>
-                <textarea 
-                  rows="2"
-                  value={notes[region]} 
-                  onChange={e => setNotes({...notes, [region]: e.target.value})}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-primary-500 focus:border-primary-500" 
-                  placeholder={`Notes for ${region}...`}
-                />
+            {/* Cause of Death Section (GAP 10) */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-slate-500" />
+                <h3 className="font-semibold text-slate-800">Cause of Death</h3>
+                {causeOfDeath && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">Recorded</span>}
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Immediate Cause</label>
+                  <textarea
+                    rows="2"
+                    value={codForm.immediateCause}
+                    onChange={e => setCodForm({...codForm, immediateCause: e.target.value})}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
+                    placeholder="e.g., Hypovolemic shock due to..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Antecedent Cause</label>
+                  <textarea
+                    rows="2"
+                    value={codForm.antecedentCause}
+                    onChange={e => setCodForm({...codForm, antecedentCause: e.target.value})}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
+                    placeholder="e.g., Laceration of left femoral artery..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Contributory Factors</label>
+                  <textarea
+                    rows="2"
+                    value={codForm.contributory}
+                    onChange={e => setCodForm({...codForm, contributory: e.target.value})}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded"
+                  />
+                </div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" checked={codForm.underInvestigation} onChange={e => setCodForm({...codForm, underInvestigation: e.target.checked})} className="rounded" />
+                  <span className="text-sm text-slate-700">Under Investigation</span>
+                </label>
+                <button onClick={saveCauseOfDeath} className="px-4 py-2 bg-emerald-600 text-white rounded text-sm font-medium hover:bg-emerald-700">
+                  {causeOfDeath ? 'Update Cause of Death' : 'Record Cause of Death'}
+                </button>
+              </div>
+            </div>
+
+            {/* Deceased Identifications Section (GAP 8) */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center">
+                  <UserCheck className="w-5 h-5 mr-2 text-slate-500" />
+                  <h3 className="font-semibold text-slate-800">Deceased Identifications</h3>
+                </div>
+                <button onClick={() => setShowIdForm(!showIdForm)} className="text-xs px-3 py-1.5 bg-slate-800 text-white rounded font-medium hover:bg-slate-700">
+                  {showIdForm ? 'Cancel' : '+ Add Identifier'}
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                {showIdForm && (
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                    <input
+                      placeholder="Identifier Name *"
+                      value={idForm.identifierName}
+                      onChange={e => setIdForm({...idForm, identifierName: e.target.value})}
+                      className="w-full px-3 py-2 text-sm border rounded"
+                    />
+                    <input
+                      placeholder="Address"
+                      value={idForm.identifierAddress}
+                      onChange={e => setIdForm({...idForm, identifierAddress: e.target.value})}
+                      className="w-full px-3 py-2 text-sm border rounded"
+                    />
+                    <input
+                      placeholder="Relationship to Deceased"
+                      value={idForm.relationship}
+                      onChange={e => setIdForm({...idForm, relationship: e.target.value})}
+                      className="w-full px-3 py-2 text-sm border rounded"
+                    />
+                    <input
+                      placeholder="NIC (optional)"
+                      value={idForm.nic}
+                      onChange={e => setIdForm({...idForm, nic: e.target.value})}
+                      className="w-full px-3 py-2 text-sm border rounded"
+                    />
+                    <button onClick={addIdentification} className="px-4 py-2 bg-slate-900 text-white rounded text-sm font-medium">
+                      Save Identifier
+                    </button>
+                  </div>
+                )}
+                {identifications.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic">No identifiers recorded.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {identifications.map(idRec => (
+                      <div key={idRec.identification_id} className="py-3 first:pt-0 last:pb-0">
+                        <p className="text-sm font-medium text-slate-800">{idRec.identifier_name}</p>
+                        <p className="text-xs text-slate-500">{idRec.relationship}{idRec.relationship && idRec.identifier_address ? ' • ' : ''}{idRec.identifier_address}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>
