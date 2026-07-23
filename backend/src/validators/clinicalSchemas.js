@@ -5,6 +5,11 @@
 const { z } = require('zod');
 const { sanitizedString } = require('./commonSchemas');
 
+const referralCategoryEnum = z.enum([
+  'trauma', 'domestic_abuse', 'sexual_abuse', 'child_abuse',
+  'detainee', 'drug_addiction', 'age_estimation', 'dna_sample', 'other'
+]).optional().nullable();
+
 const clinicalExamSchema = z.object({
   caseId: z.number().positive(),
   examDate: z.string().date(),
@@ -18,6 +23,35 @@ const clinicalExamSchema = z.object({
   drugInfluence: sanitizedString.max(100).optional().nullable(),
   sexualAssault: z.boolean(),
   authorizationType: z.enum(['hospital_police', 'police_station', 'request_letter', 'court_order']).optional().nullable(),
+
+  // Section 1: Header & Administrative Metadata
+  officerName: sanitizedString.max(100).optional().nullable(),
+  officerRank: sanitizedString.max(50).optional().nullable(),
+  officerBadgeNo: sanitizedString.max(50).optional().nullable(),
+  mlefSerialNo: sanitizedString.max(50).optional().nullable(),
+  courtCaseNo: sanitizedString.max(50).optional().nullable(),
+
+  // Section 2: Referral Context
+  referralCategory: referralCategoryEnum,
+
+  // Section 3: Physical Examination
+  identificationMarks: sanitizedString.optional().nullable(),
+  thumbImpressionLeft: sanitizedString.optional().nullable(),
+  thumbImpressionRight: sanitizedString.optional().nullable(),
+  medicalOfficerNotes: sanitizedString.optional().nullable(),
+
+  // Section 4: Investigations & Follow-up
+  investigationsNotes: sanitizedString.optional().nullable(),
+  followUpNotes: sanitizedString.optional().nullable(),
+
+  // Section 5: Storage Data Checklist
+  hasDoctorCopy: z.boolean().optional(),
+  hasInjuryPhotos: z.boolean().optional(),
+  hasInvestigationFindings: z.boolean().optional(),
+  hasExternalReports: z.boolean().optional(),
+  hasCourtSummons: z.boolean().optional(),
+  hasMlrCopy: z.boolean().optional(),
+  hasCertificateOfReceipt: z.boolean().optional(),
 });
 
 const clinicalExamUpdateSchema = clinicalExamSchema.omit({ caseId: true }).partial();

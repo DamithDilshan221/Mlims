@@ -48,46 +48,58 @@ async function listAll(client, limit = 50, offset = 0) {
   return rows;
 }
 
+const INSERT_COLS = [
+  'case_id', 'doctor_id', 'exam_date', 'exam_time', 'ward', 'bht_no',
+  'discharge_date', 'patient_consent', 'brief_history',
+  'alcohol_influence', 'drug_influence', 'sexual_assault', 'authorization_type',
+  'officer_name', 'officer_rank', 'officer_badge_no', 'mlef_serial_no', 'court_case_no',
+  'referral_category',
+  'identification_marks', 'thumb_impression_left', 'thumb_impression_right', 'medical_officer_notes',
+  'investigations_notes', 'follow_up_notes',
+  'has_doctor_copy', 'has_injury_photos', 'has_investigation_findings',
+  'has_external_reports', 'has_court_summons', 'has_mlr_copy', 'has_certificate_of_receipt',
+];
+
+const INSERT_PARAMS = INSERT_COLS.map((_, i) => `$${i + 1}`).join(', ');
+
+function toRow(data) {
+  return [
+    data.caseId, data.doctorId, data.examDate, data.examTime, data.ward, data.bhtNo,
+    data.dischargeDate, data.patientConsent, data.briefHistory,
+    data.alcoholInfluence, data.drugInfluence, data.sexualAssault, data.authorizationType,
+    data.officerName, data.officerRank, data.officerBadgeNo, data.mlefSerialNo, data.courtCaseNo,
+    data.referralCategory,
+    data.identificationMarks, data.thumbImpressionLeft, data.thumbImpressionRight, data.medicalOfficerNotes,
+    data.investigationsNotes, data.followUpNotes,
+    data.hasDoctorCopy, data.hasInjuryPhotos, data.hasInvestigationFindings,
+    data.hasExternalReports, data.hasCourtSummons, data.hasMlrCopy, data.hasCertificateOfReceipt,
+  ];
+}
+
 async function create(client, data) {
   const { rows } = await client.query(
-    `INSERT INTO clinical_examinations
-       (case_id, doctor_id, exam_date, exam_time, ward, bht_no,
-        discharge_date, patient_consent, brief_history,
-        alcohol_influence, drug_influence, sexual_assault, authorization_type)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    `INSERT INTO clinical_examinations (${INSERT_COLS.join(', ')})
+     VALUES (${INSERT_PARAMS})
      RETURNING *`,
-    [
-      data.caseId, data.doctorId, data.examDate, data.examTime,
-      data.ward, data.bhtNo, data.dischargeDate, data.patientConsent,
-      data.briefHistory, data.alcoholInfluence, data.drugInfluence,
-      data.sexualAssault, data.authorizationType,
-    ]
+    toRow(data)
   );
   return rows[0];
 }
 
 async function update(client, mlefId, data) {
+  const keys = Object.keys(data).filter(k => {
+    const col = k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
+    return INSERT_COLS.includes(col) && col !== 'case_id' && col !== 'doctor_id';
+  });
+  if (keys.length === 0) return (await getById(client, mlefId)) || null;
+  const setClause = keys.map((k, i) => {
+    const col = k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
+    return `${col} = $${i + 2}`;
+  }).join(', ');
+  const values = keys.map(k => data[k]);
   const { rows } = await client.query(
-    `UPDATE clinical_examinations
-     SET    exam_date = COALESCE($2, exam_date),
-            exam_time = COALESCE($3, exam_time),
-            ward = COALESCE($4, ward),
-            bht_no = COALESCE($5, bht_no),
-            discharge_date = COALESCE($6, discharge_date),
-            patient_consent = COALESCE($7, patient_consent),
-            brief_history = COALESCE($8, brief_history),
-            alcohol_influence = COALESCE($9, alcohol_influence),
-            drug_influence = COALESCE($10, drug_influence),
-            sexual_assault = COALESCE($11, sexual_assault),
-            authorization_type = COALESCE($12, authorization_type)
-     WHERE  mlef_id = $1
-     RETURNING *`,
-    [
-      mlefId, data.examDate, data.examTime, data.ward, data.bhtNo,
-      data.dischargeDate, data.patientConsent, data.briefHistory,
-      data.alcoholInfluence, data.drugInfluence, data.sexualAssault,
-      data.authorizationType,
-    ]
+    `UPDATE clinical_examinations SET ${setClause} WHERE mlef_id = $1 RETURNING *`,
+    [mlefId, ...values]
   );
   return rows[0] || null;
 }
