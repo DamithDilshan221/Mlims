@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
+import CaseDocumentsWidget from '../components/documents/CaseDocumentsWidget';
 
 import { Activity, ShieldAlert, CheckSquare, Stethoscope, Plus, X, FileText, ClipboardList, Landmark, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
@@ -568,6 +569,9 @@ const ClinicalCaseDetailsPage = () => {
               </div>
             </div>
           )}
+          
+          {/* Case Documents Widget */}
+          <CaseDocumentsWidget caseId={caseInfo.case_id} />
         </div>
       </div>
     </div>
