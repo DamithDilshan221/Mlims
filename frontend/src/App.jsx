@@ -32,6 +32,7 @@ import StatisticsPage from './pages/StatisticsPage';
 import BackupSettingsPage from './pages/BackupSettingsPage';
 import PMRegistryPage from './pages/PMRegistryPage';
 import CourtDeskPage from './pages/CourtDeskPage';
+import PoliceHubPage from './pages/PoliceHubPage';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -106,6 +107,11 @@ function App() {
       <Route path="/court" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
       <Route path="/court/summons" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
       <Route path="/court/trials" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
+
+      {/* Police & Inquest Hub */}
+      <Route path="/police-hub" element={<ProtectedRoute><PoliceHubPage /></ProtectedRoute>} />
+      <Route path="/police-hub/inquests" element={<ProtectedRoute><PoliceHubPage /></ProtectedRoute>} />
+      <Route path="/police-hub/handovers" element={<ProtectedRoute><PoliceHubPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

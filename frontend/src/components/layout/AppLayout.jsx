@@ -6,7 +6,8 @@ import {
   ShieldAlert, LogOut, Search, Building2, FileCheck,
   UserCog, ShieldCheck, BarChart3, Settings, BookOpen,
   ClipboardList, Skull, Gavel, Menu, X, ChevronDown, ChevronRight,
-  Stethoscope, Microscope, Scale, Library, Bell
+  Stethoscope, Microscope, Scale, Library, Bell, Shield,
+  AlertTriangle, Upload
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -33,6 +34,15 @@ const NAV_SECTIONS = [
       { label: 'PM Registry', path: '/pm-registry', icon: BookOpen },
       { label: 'Lab & Tox', path: '/lab-tests', icon: Microscope },
       { label: 'Evidence', path: '/evidence', icon: ShieldAlert },
+    ],
+  },
+  {
+    label: 'Police & Inquest Hub',
+    roles: ['admin', 'police', 'doctor', 'court'],
+    items: [
+      { label: 'Police Hub', path: '/police-hub', icon: Shield },
+      { label: 'Inquest Register', path: '/police-hub/inquests', icon: AlertTriangle },
+      { label: 'Handover Log', path: '/police-hub/handovers', icon: Upload },
     ],
   },
   {
