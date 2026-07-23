@@ -6,8 +6,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const { globalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
+const config = require('./config');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -28,6 +30,7 @@ const statsRoutes = require('./routes/statistics');
 const courtSummonsRoutes = require('./routes/courtSummons');
 const pmRegistryRoutes = require('./routes/pmRegistry');
 const policeHubRoutes = require('./routes/policeHub');
+const reportingRoutes = require('./routes/reporting');
 
 const app = express();
 
@@ -41,6 +44,7 @@ app.use(globalLimiter);
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 
+app.use('/api/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/cases', caseRoutes);
@@ -59,6 +63,7 @@ app.use('/api/statistics', statsRoutes);
 app.use('/api/court-summons', courtSummonsRoutes);
 app.use('/api/pm-registry', pmRegistryRoutes);
 app.use('/api/police-hub', policeHubRoutes);
+app.use('/api/reporting', reportingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

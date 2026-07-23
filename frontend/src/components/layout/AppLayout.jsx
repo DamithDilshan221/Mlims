@@ -7,7 +7,9 @@ import {
   UserCog, ShieldCheck, BarChart3, Settings, BookOpen,
   ClipboardList, Skull, Gavel, Menu, X, ChevronDown, ChevronRight,
   Stethoscope, Microscope, Scale, Library, Bell, Shield,
-  AlertTriangle, Upload
+
+  AlertTriangle, Upload, CalendarDays, PieChart, Plus
+
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -22,7 +24,6 @@ const NAV_SECTIONS = [
     label: 'Clinical Forensics',
     roles: ['admin', 'doctor'],
     items: [
-      { label: 'New MLEF Entry', path: '/cases/new', icon: ClipboardList },
       { label: 'Active Cases', path: '/cases', icon: Stethoscope },
       { label: 'MLR Reports', path: '/reports', icon: FileCheck },
     ],
@@ -41,6 +42,7 @@ const NAV_SECTIONS = [
     roles: ['admin', 'police', 'doctor', 'court'],
     items: [
       { label: 'Police Hub', path: '/police-hub', icon: Shield },
+      { label: 'New Case', path: '/cases/new', icon: Plus },
     ],
   },
   {
@@ -50,6 +52,17 @@ const NAV_SECTIONS = [
       { label: 'Summons Register', path: '/court/summons', icon: Scale },
       { label: 'Trial Calendar', path: '/court/trials', icon: Gavel },
       { label: 'Directories', path: '/directories', icon: Building2 },
+    ],
+  },
+  {
+    label: 'Reports',
+    roles: ['admin', 'auditor', 'court'],
+    items: [
+      { label: 'Daily Case Report', path: '/reports/daily', icon: CalendarDays },
+      { label: 'Monthly Report', path: '/reports/monthly', icon: BarChart3 },
+      { label: 'Pending Tracker', path: '/reports/pending', icon: AlertTriangle },
+      { label: 'Court Report', path: '/reports/court', icon: Scale },
+      { label: 'Statistical', path: '/reports/statistical', icon: PieChart },
     ],
   },
   {

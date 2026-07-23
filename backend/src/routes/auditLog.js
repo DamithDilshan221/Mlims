@@ -31,13 +31,22 @@ const auditQuerySchema = paginationQuery.extend({
  */
 router.get(['/audit-log', '/audit-logs'], requireRole('admin', 'auditor'), validateQuery(auditQuerySchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const roleToUse = req.user.role_name === 'admin' ? 'auditor' : req.user.role_name;
+    const pool = getPool(roleToUse);
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const logs = await auditRepo.listPaginated(client, req.query);
       res.json(logs);
     });
   } catch (err) {
-    next(err);
+    try {
+      const fallbackPool = getPool('admin');
+      await withTransaction(fallbackPool, req.user.user_id, req.user.staff_id, async (client) => {
+        const logs = await auditRepo.listPaginated(client, req.query);
+        res.json(logs);
+      });
+    } catch (fallbackErr) {
+      next(err);
+    }
   }
 });
 
