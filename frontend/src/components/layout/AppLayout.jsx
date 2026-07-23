@@ -22,7 +22,6 @@ const NAV_SECTIONS = [
     label: 'Clinical Forensics',
     roles: ['admin', 'doctor'],
     items: [
-      { label: 'New MLEF Entry', path: '/cases/new', icon: ClipboardList },
       { label: 'Active Cases', path: '/cases', icon: Stethoscope },
       { label: 'MLR Reports', path: '/reports', icon: FileCheck },
     ],
