@@ -4,7 +4,7 @@ import api from '../utils/api';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
 
 import { useAuth } from '../context/AuthContext';
-import { User, Activity, MapPin, Hash, FileText, ClipboardList, FileSignature } from 'lucide-react';
+import { User, Activity, MapPin, Hash, FileText, UploadCloud, Scale } from 'lucide-react';
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
@@ -12,7 +12,8 @@ const PatientDetailsPage = () => {
   const [patient, setPatient] = useState(null);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const canHandleClinicalForms = ['admin', 'doctor'].includes(user?.role);
+  const canAddPdf = ['admin', 'doctor', 'records_clerk'].includes(user?.role);
+  const canOpenCourtReport = ['admin', 'doctor', 'court'].includes(user?.role);
 
   useEffect(() => {
     Promise.all([
@@ -93,22 +94,26 @@ const PatientDetailsPage = () => {
                     {c.case_number}
                   </Link>
                   <p className="text-xs text-slate-500 mt-0.5 capitalize">Type: {c.case_type} • Location: {c.incident_location || 'N/A'}</p>
-                  {c.case_type === 'clinical' && canHandleClinicalForms && (
+                  {(canAddPdf || canOpenCourtReport) && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Link
-                        to={`/cases/clinical/${c.case_id}`}
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-100"
-                      >
-                        <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
-                        Open MLEF
-                      </Link>
-                      <Link
-                        to={`/reports/generate/clinical/${c.case_id}`}
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700"
-                      >
-                        <FileSignature className="w-3.5 h-3.5 mr-1.5" />
-                        Fill MRF
-                      </Link>
+                      {canAddPdf && (
+                        <Link
+                          to={`/cases/${c.case_id}/documents`}
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-100"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5 mr-1.5" />
+                          Add PDF
+                        </Link>
+                      )}
+                      {canOpenCourtReport && (
+                        <Link
+                          to="/reports/court"
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700"
+                        >
+                          <Scale className="w-3.5 h-3.5 mr-1.5" />
+                          Court Report
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>

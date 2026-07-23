@@ -28,6 +28,7 @@ const statsRoutes = require('./routes/statistics');
 const courtSummonsRoutes = require('./routes/courtSummons');
 const pmRegistryRoutes = require('./routes/pmRegistry');
 const policeHubRoutes = require('./routes/policeHub');
+const reportingRoutes = require('./routes/reporting');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/statistics', statsRoutes);
 app.use('/api/court-summons', courtSummonsRoutes);
 app.use('/api/pm-registry', pmRegistryRoutes);
 app.use('/api/police-hub', policeHubRoutes);
+app.use('/api/reporting', reportingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
