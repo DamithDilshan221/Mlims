@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 import { BookOpen, UserMinus, UploadCloud, UserCheck, Activity } from 'lucide-react';
+import CaseDocumentsWidget from '../components/documents/CaseDocumentsWidget';
 
 
 
@@ -390,6 +391,9 @@ const PostmortemCaseDetailsPage = () => {
                 )}
               </div>
             </div>
+            
+            {/* Case Documents Widget */}
+            <CaseDocumentsWidget caseId={caseInfo.case_id} />
           </>
         )}
       </div>
