@@ -1,15 +1,50 @@
 const express = require('express');
 const authenticate = require('../middleware/authenticate');
 const requireRole = require('../middleware/requireRole');
-const { validateBody, validateParams } = require('../middleware/validate');
-const { idParam } = require('../validators/commonSchemas');
+const { validateBody, validateParams, validateQuery } = require('../middleware/validate');
+const { idParam, paginationQuery } = require('../validators/commonSchemas');
 const { courtSummonSchema, courtSummonUpdateSchema } = require('../validators/courtSummonsSchemas');
 const { getPool } = require('../db/pools');
-const { withTransaction } = require('../db/transaction');
+const { withTransaction, withClient } = require('../db/transaction');
 const repo = require('../repositories/courtSummonsRepository');
 
 const router = express.Router();
 router.use(authenticate);
+
+/**
+ * GET /court-summons
+ * Lists all summons (paginated) for the Court & Legal Desk page.
+ * Uses the admin pool because the multi-table JOIN requires broader SELECT
+ * grants than non-admin roles have.
+ */
+router.get('/', validateQuery(paginationQuery), async (req, res, next) => {
+  try {
+    const pool = getPool('admin');
+    await withClient(pool, async (client) => {
+      const summons = await repo.listAll(client, req.query.limit, req.query.offset);
+      res.json(summons);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /court-summons/upcoming
+ * Returns summons with upcoming appearance dates within the configurable window.
+ */
+router.get('/upcoming', async (req, res, next) => {
+  try {
+    const days = parseInt(req.query.days, 10) || 30;
+    const pool = getPool('admin');
+    await withClient(pool, async (client) => {
+      const summons = await repo.listUpcoming(client, days);
+      res.json(summons);
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/case/:caseId', validateParams(idParam), async (req, res, next) => {
   try {

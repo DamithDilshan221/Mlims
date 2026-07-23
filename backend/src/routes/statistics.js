@@ -69,20 +69,35 @@ router.get('/cases-by-location', async (req, res, next) => {
 
 /**
  * GET /statistics/dashboard
- * Aggregates role-specific counts for the main dashboard widgets.
+ * Aggregates role-specific counts for the main dashboard widgets,
+ * including court/trial metrics for the enhanced dashboard.
  */
 router.get('/dashboard', async (req, res, next) => {
   try {
-    const pool = getPool('admin'); // Execute aggregate queries safely
+    const pool = getPool('admin');
     const role = req.user.role_name;
 
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
-      const [activeUsersRes, lockedUsersRes, openCasesRes, pendingLabsRes, pendingTransfersRes] = await Promise.all([
+      const [
+        activeUsersRes, lockedUsersRes, openCasesRes, pendingLabsRes, pendingTransfersRes,
+        activeClinicalRes, pendingPmrRes, upcomingTrialsRes, unissuedReportsRes,
+        summonsAlertsRes,
+      ] = await Promise.all([
         client.query(`SELECT COUNT(*) FROM users WHERE is_active = true`),
         client.query(`SELECT COUNT(*) FROM users WHERE is_active = false`),
         client.query(`SELECT COUNT(*) FROM forensic_cases WHERE status != 'closed'`),
         client.query(`SELECT COUNT(*) FROM lab_requests WHERE status = 'pending'`),
         client.query(`SELECT COUNT(*) FROM chain_of_custody`),
+        // Active clinical cases (not closed)
+        client.query(`SELECT COUNT(*) FROM forensic_cases WHERE case_type = 'clinical' AND status != 'closed'`),
+        // Pending postmortems (no cause of death yet)
+        client.query(`SELECT COUNT(*) FROM postmortem_examinations pe WHERE NOT EXISTS (SELECT 1 FROM causes_of_death cod WHERE cod.pmr_id = pe.pmr_id)`),
+        // Upcoming trials (next 30 days)
+        client.query(`SELECT COUNT(*) FROM medico_legal_reports WHERE trial_date IS NOT NULL AND trial_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'`),
+        // Unissued reports (clinical exams > 7 days old with no MLR)
+        client.query(`SELECT COUNT(*) FROM clinical_examinations ce WHERE NOT EXISTS (SELECT 1 FROM medico_legal_reports mlr WHERE mlr.mlef_id = ce.mlef_id) AND ce.exam_date < CURRENT_DATE - INTERVAL '7 days'`),
+        // Summons alerts — upcoming appearance dates within 7 days
+        client.query(`SELECT COUNT(*) FROM court_summons WHERE appearance_date IS NOT NULL AND appearance_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'`),
       ]);
 
       res.json({
@@ -91,6 +106,52 @@ router.get('/dashboard', async (req, res, next) => {
         openCases: parseInt(openCasesRes.rows[0].count, 10),
         pendingLabs: parseInt(pendingLabsRes.rows[0].count, 10),
         pendingTransfers: parseInt(pendingTransfersRes.rows[0].count, 10),
+        activeClinical: parseInt(activeClinicalRes.rows[0].count, 10),
+        pendingPmrs: parseInt(pendingPmrRes.rows[0].count, 10),
+        upcomingTrials: parseInt(upcomingTrialsRes.rows[0].count, 10),
+        unissuedReports: parseInt(unissuedReportsRes.rows[0].count, 10),
+        summonsAlerts: parseInt(summonsAlertsRes.rows[0].count, 10),
+      });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /statistics/trial-calendar
+ * Returns upcoming trials and summons appearances for the trial calendar.
+ */
+router.get('/trial-calendar', async (req, res, next) => {
+  try {
+    const pool = getPool('admin');
+    await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
+      // MLR trial dates
+      const mlrTrials = await client.query(`
+        SELECT mlr.mlr_id, mlr.trial_date AS event_date, mlr.court_case_no, mlr.serial_no,
+               c.court_name, fc.case_number, 'mlr_trial' AS event_type,
+               CASE WHEN mlr.issue_date IS NOT NULL THEN 'dispatched' ELSE 'pending' END AS status
+        FROM   medico_legal_reports mlr
+        JOIN   courts c ON mlr.court_id = c.court_id
+        JOIN   clinical_examinations ce ON mlr.mlef_id = ce.mlef_id
+        JOIN   forensic_cases fc ON ce.case_id = fc.case_id
+        WHERE  mlr.trial_date IS NOT NULL AND mlr.trial_date >= CURRENT_DATE - INTERVAL '7 days'
+        ORDER BY mlr.trial_date
+      `);
+      // Court summons appearance dates
+      const summonsTrials = await client.query(`
+        SELECT cs.summons_id, cs.appearance_date AS event_date, cs.response_status,
+               c.court_name, fc.case_number, 'summons' AS event_type,
+               cs.response_status AS status
+        FROM   court_summons cs
+        JOIN   courts c ON cs.court_id = c.court_id
+        JOIN   forensic_cases fc ON cs.case_id = fc.case_id
+        WHERE  cs.appearance_date IS NOT NULL AND cs.appearance_date >= CURRENT_DATE - INTERVAL '7 days'
+        ORDER BY cs.appearance_date
+      `);
+      res.json({
+        mlrTrials: mlrTrials.rows,
+        summonsAppearances: summonsTrials.rows,
       });
     });
   } catch (err) {

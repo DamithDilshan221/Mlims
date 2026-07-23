@@ -31,6 +31,7 @@ import AuditLogPage from './pages/AuditLogPage';
 import StatisticsPage from './pages/StatisticsPage';
 import BackupSettingsPage from './pages/BackupSettingsPage';
 import PMRegistryPage from './pages/PMRegistryPage';
+import CourtDeskPage from './pages/CourtDeskPage';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -100,6 +101,11 @@ function App() {
       <Route path="/statistics" element={<ProtectedRoute allowedRoles={['admin', 'auditor']}><StatisticsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><BackupSettingsPage /></ProtectedRoute>} />
       <Route path="/pm-registry" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'police', 'court']}><PMRegistryPage /></ProtectedRoute>} />
+
+      {/* Court & Legal Desk */}
+      <Route path="/court" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
+      <Route path="/court/summons" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
+      <Route path="/court/trials" element={<ProtectedRoute><CourtDeskPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
