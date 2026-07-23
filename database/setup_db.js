@@ -89,7 +89,9 @@ async function main() {
     'V20__add_missing_staff_records.sql',
     'V21__reapply_missing_grants.sql',
     'V22__update_seed_mlef_data.sql',
-    'V23__enhance_court_role_grants.sql'
+    'V23__enhance_court_role_grants.sql',
+    'V24__police_inquest_module.sql',
+    'V25__fix_missing_role_grants.sql'
 
   ];
 

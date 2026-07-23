@@ -119,7 +119,7 @@ router.get('/:id/content', async (req, res, next) => {
  * POST /digital-assets or POST /digital-assets/case/:caseId
  * Upload a file and insert metadata into digital_assets table.
  */
-router.post(['/', '/case/:caseId'], requireRole('admin', 'records_clerk', 'police', 'doctor'), upload.single('file'), async (req, res, next) => {
+router.post(['/', '/case/:caseId'], requireRole('admin', 'records_clerk', 'police', 'doctor', 'forensic_staff'), upload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided.' });
