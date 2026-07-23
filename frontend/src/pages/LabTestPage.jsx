@@ -3,7 +3,8 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import clsx from 'clsx';
-import { CheckCircle2, Clock, FlaskConical, ChevronRight, X, FileText, AlertCircle, Calendar } from 'lucide-react';
+import { CheckCircle2, Clock, FlaskConical, ChevronRight, X, FileText, AlertCircle, Calendar, Plus, Download } from 'lucide-react';
+import LabRequestModal from '../components/modals/LabRequestModal';
 
 const LabTestPage = () => {
   const { user } = useAuth();
@@ -15,7 +16,9 @@ const LabTestPage = () => {
   // Result finalization state
   const [activeRequest, setActiveRequest] = useState(null);
   const [resultData, setResultData] = useState({ findings: '', diagnosis: '', documentUri: '' });
+  const [selectedFile, setSelectedFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showLabModal, setShowLabModal] = useState(false);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -38,6 +41,7 @@ const LabTestPage = () => {
   const handleOpenPanel = (request) => {
     setActiveRequest(request);
     setResultData({ findings: '', diagnosis: '', documentUri: '' });
+    setSelectedFile(null);
   };
 
   const handleClosePanel = () => {
@@ -48,7 +52,22 @@ const LabTestPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post(`/lab-requests/requests/${activeRequest.request_id}/finalize`, resultData);
+      let finalDocUri = resultData.documentUri;
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('case_id', activeRequest.case_id);
+        
+        const uploadRes = await api.post('/digital-assets', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        finalDocUri = uploadRes.data.file_uri;
+      }
+
+      await api.post(`/lab-requests/requests/${activeRequest.request_id}/finalize`, {
+        ...resultData,
+        documentUri: finalDocUri
+      });
       toast.success("Lab result finalized successfully and case updated.");
       handleClosePanel();
       await fetchRequests();
@@ -67,14 +86,24 @@ const LabTestPage = () => {
         <div className="absolute top-0 right-0 p-12 opacity-10">
           <FlaskConical size={120} />
         </div>
-        <div className="relative z-10 flex items-center space-x-4">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-            <FlaskConical className="w-8 h-8 text-white" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <FlaskConical className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold font-outfit tracking-tight">Laboratory & Toxicology Dashboard</h2>
+              <p className="text-blue-100 mt-2 text-lg">Manage pending tests, submit analytical findings, and finalize clinical diagnoses.</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-3xl font-bold font-outfit tracking-tight">Laboratory & Toxicology Dashboard</h2>
-            <p className="text-blue-100 mt-2 text-lg">Manage pending tests, submit analytical findings, and finalize clinical diagnoses.</p>
-          </div>
+          {(user?.role === 'doctor' || user?.role === 'admin') && (
+            <button 
+              onClick={() => setShowLabModal(true)}
+              className="px-5 py-2.5 bg-white text-indigo-600 font-bold rounded-xl shadow hover:shadow-lg transition-all flex items-center w-max"
+            >
+              <Plus className="w-5 h-5 mr-2" /> Request Lab Report
+            </button>
+          )}
         </div>
       </div>
 
@@ -109,10 +138,10 @@ const LabTestPage = () => {
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50/50 text-slate-700 font-semibold border-b border-slate-100">
                   <tr>
-                    <th className="px-6 py-4">Request Details</th>
-                    <th className="px-6 py-4">Case Reference</th>
-                    <th className="px-6 py-4">Status</th>
-                    {user.role === 'forensic_staff' && <th className="px-6 py-4 text-right">Action</th>}
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Test Details</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Identifiers</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100/50">
@@ -177,21 +206,27 @@ const LabTestPage = () => {
                             {r.status.toUpperCase()}
                           </span>
                         </td>
-                        {user.role === 'forensic_staff' && (
-                          <td className="px-6 py-4 text-right">
-                            {r.status === 'pending' ? (
-                              <button 
-                                onClick={() => handleOpenPanel(r)}
-                                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm group-hover:shadow-md"
-                              >
-                                Finalize
-                                <ChevronRight className="w-4 h-4 ml-1" />
-                              </button>
-                            ) : (
-                              <span className="text-slate-400 text-xs font-medium px-4">Done</span>
-                            )}
-                          </td>
-                        )}
+                        <td className="px-6 py-4 text-right space-x-2">
+                          {user.role === 'forensic_staff' && r.status === 'pending' && (
+                            <button 
+                              onClick={() => handleOpenPanel(r)}
+                              className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm group-hover:shadow-md"
+                            >
+                              Finalize
+                              <ChevronRight className="w-4 h-4 ml-1" />
+                            </button>
+                          )}
+                          {r.status === 'completed' && r.document_uri && (
+                            <a 
+                              href={`http://localhost:3000/api${r.document_uri}`} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm group-hover:shadow-md"
+                            >
+                              <Download className="w-4 h-4 mr-1" /> Download
+                            </a>
+                          )}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -258,15 +293,14 @@ const LabTestPage = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-slate-700">Document URI (Optional)</label>
+                  <label className="block text-sm font-semibold text-slate-700">Lab Report File (PDF/Image)</label>
                   <input 
-                    type="text" 
-                    value={resultData.documentUri} 
-                    onChange={e => setResultData({...resultData, documentUri: e.target.value})}
-                    placeholder="s3://reports/lab-123.pdf"
-                    className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white shadow-sm font-mono text-xs" 
+                    type="file" 
+                    onChange={e => setSelectedFile(e.target.files[0])}
+                    accept=".pdf,image/*,.doc,.docx"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" 
                   />
-                  <p className="text-xs text-slate-400 mt-1">Provide a link if an external report document is available.</p>
+                  <p className="text-xs text-slate-400 mt-1">Upload the finalized lab or toxicology report.</p>
                 </div>
 
                 <div className="pt-4 border-t border-slate-200 flex justify-end space-x-3">
@@ -297,6 +331,11 @@ const LabTestPage = () => {
         )}
 
       </div>
+      <LabRequestModal 
+        isOpen={showLabModal} 
+        onClose={() => setShowLabModal(false)}
+        onSuccess={fetchRequests}
+      />
     </div>
   );
 };
