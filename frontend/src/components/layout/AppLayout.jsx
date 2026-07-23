@@ -41,8 +41,6 @@ const NAV_SECTIONS = [
     roles: ['admin', 'police', 'doctor', 'court'],
     items: [
       { label: 'Police Hub', path: '/police-hub', icon: Shield },
-      { label: 'Inquest Register', path: '/police-hub/inquests', icon: AlertTriangle },
-      { label: 'Handover Log', path: '/police-hub/handovers', icon: Upload },
     ],
   },
   {
