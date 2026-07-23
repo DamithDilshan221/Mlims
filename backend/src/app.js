@@ -6,8 +6,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const { globalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
+const config = require('./config');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -42,6 +44,7 @@ app.use(globalLimiter);
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 
+app.use('/api/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/cases', caseRoutes);

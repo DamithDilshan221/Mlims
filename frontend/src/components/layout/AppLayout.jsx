@@ -7,7 +7,9 @@ import {
   UserCog, ShieldCheck, BarChart3, Settings, BookOpen,
   ClipboardList, Skull, Gavel, Menu, X, ChevronDown, ChevronRight,
   Stethoscope, Microscope, Scale, Library, Bell, Shield,
-  AlertTriangle, Upload, CalendarDays, PieChart
+
+  AlertTriangle, Upload, CalendarDays, PieChart, Plus
+
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -41,6 +43,7 @@ const NAV_SECTIONS = [
     roles: ['admin', 'police', 'doctor', 'court'],
     items: [
       { label: 'Police Hub', path: '/police-hub', icon: Shield },
+      { label: 'New Case', path: '/cases/new', icon: Plus },
     ],
   },
   {
