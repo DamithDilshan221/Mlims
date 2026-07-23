@@ -103,6 +103,25 @@ async function update(client, caseId, { incidentDate, incidentLocation, status }
 }
 
 /**
+ * Helper to gracefully catch permission denied errors (42501) and return empty rows.
+ * This is crucial because getTimeline aggregates data across many tables, and the current
+ * user's role might not have SELECT grants on all of them (e.g. police viewing a timeline
+ * shouldn't crash if they can't query specimens).
+ */
+async function safeQuery(client, sql, params) {
+  try {
+    await client.query('SAVEPOINT safe_query');
+    const result = await client.query(sql, params);
+    await client.query('RELEASE SAVEPOINT safe_query');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK TO SAVEPOINT safe_query');
+    if (err.code === '42501') return { rows: [] };
+    throw err;
+  }
+}
+
+/**
  * Get a full case timeline aggregating all related records.
  * Used by GET /cases/:id/timeline.
  */
@@ -112,7 +131,7 @@ async function getTimeline(client, caseId) {
   if (!caseResult) return null;
 
   // Clinical examination (0 or 1)
-  const { rows: clinicalRows } = await client.query(
+  const { rows: clinicalRows } = await safeQuery(client, 
     `SELECT ce.*, s.first_name || ' ' || s.last_name AS doctor_name
      FROM clinical_examinations ce
      JOIN staff s ON ce.doctor_id = s.staff_id
@@ -121,7 +140,7 @@ async function getTimeline(client, caseId) {
   );
 
   // Postmortem examination (0 or 1)
-  const { rows: pmRows } = await client.query(
+  const { rows: pmRows } = await safeQuery(client, 
     `SELECT pe.*, s.first_name || ' ' || s.last_name AS doctor_name
      FROM postmortem_examinations pe
      JOIN staff s ON pe.doctor_id = s.staff_id
@@ -130,7 +149,7 @@ async function getTimeline(client, caseId) {
   );
 
   // Specimens
-  const { rows: specimens } = await client.query(
+  const { rows: specimens } = await safeQuery(client, 
     `SELECT sp.*, st.name AS specimen_type_name
      FROM specimens sp
      JOIN specimen_types st ON sp.specimen_type_id = st.specimen_type_id
@@ -140,7 +159,7 @@ async function getTimeline(client, caseId) {
   );
 
   // Medico-legal reports (via clinical exam)
-  const { rows: mlrRows } = await client.query(
+  const { rows: mlrRows } = await safeQuery(client, 
     `SELECT mlr.*, c.court_name
      FROM medico_legal_reports mlr
      JOIN courts c ON mlr.court_id = c.court_id
@@ -150,7 +169,7 @@ async function getTimeline(client, caseId) {
   );
 
   // Court receipts (via MLR or postmortem)
-  const { rows: receiptRows } = await client.query(
+  const { rows: receiptRows } = await safeQuery(client, 
     `SELECT cr.*, c.court_name
      FROM court_receipts cr
      JOIN courts c ON cr.court_id = c.court_id

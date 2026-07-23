@@ -16,7 +16,7 @@ const DocumentUploadPage = () => {
   const [previewDoc, setPreviewDoc] = useState(null);
 
   // Per DB Grants, only certain roles can upload.
-  const canUpload = ['admin', 'police', 'records_clerk'].includes(user.role);
+  const canUpload = ['admin', 'police', 'records_clerk', 'doctor'].includes(user.role);
 
   useEffect(() => {
     fetchDocuments();
