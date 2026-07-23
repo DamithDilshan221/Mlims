@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+
 import { BookOpen, UserMinus, UploadCloud, UserCheck, Activity } from 'lucide-react';
+
+
 
 const PostmortemCaseDetailsPage = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const toast = useToast();
   const [caseInfo, setCaseInfo] = useState(null);
   const [exam, setExam] = useState(null);
@@ -58,6 +63,22 @@ const PostmortemCaseDetailsPage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  const initiateExam = async () => {
+    try {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      const timeStr = today.toTimeString().split(' ')[0].substring(0, 5);
+      await api.post('/postmortem-examinations', {
+        caseId: parseInt(id),
+        dateOfPm: dateStr,
+        timeOfPm: timeStr
+      });
+      window.location.reload();
+    } catch (err) {
+      toast.error("Failed to initiate examination. Ensure you are authorized.");
+    }
+  };
 
   const saveNotes = async () => {
     try {
@@ -137,8 +158,15 @@ const PostmortemCaseDetailsPage = () => {
           </p>
         </div>
         {exam && (
-          <div className="space-x-3">
-            <Link to={`/exam-injury?pmrId=${exam.pmr_id}`} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium">
+          <div className="flex space-x-3">
+            <Link 
+              to={`/cases/${caseInfo.case_id}/documents`}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm flex items-center"
+            >
+              <File className="w-4 h-4 mr-2" />
+              Case Files
+            </Link>
+            <Link to={`/exam-injury?pmrId=${exam.pmr_id}`} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium flex items-center">
               Add Injury
             </Link>
             <button onClick={saveNotes} className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium">
@@ -177,7 +205,15 @@ const PostmortemCaseDetailsPage = () => {
         {!exam ? (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 flex flex-col justify-center items-center text-center">
             <h3 className="text-amber-800 font-bold mb-2">Examination Not Initiated</h3>
-            <p className="text-amber-700 text-sm">A doctor has not yet created the postmortem examination file for this case.</p>
+            <p className="text-amber-700 text-sm mb-4">A doctor has not yet created the postmortem examination file for this case.</p>
+            {user.role === 'admin' || user.role === 'doctor' ? (
+              <button 
+                onClick={initiateExam}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm"
+              >
+                Initiate Examination Now
+              </button>
+            ) : null}
           </div>
         ) : (
           <>

@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
+
 import { Activity, ShieldAlert, CheckSquare, Stethoscope, Plus, X, FileText, ClipboardList, Landmark, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -22,10 +23,18 @@ const STATUS_BADGE = {
   closed: 'bg-slate-100 text-slate-500 border-slate-200',
 };
 
+// import { Activity, ShieldAlert, CheckSquare, File } from 'lucide-react';
+// import clsx from 'clsx';
+
+// import { useAuth } from '../context/AuthContext';
+
+
 const ClinicalCaseDetailsPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
+
   const toast = useToast();
+
   const [caseInfo, setCaseInfo] = useState(null);
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -100,6 +109,24 @@ const ClinicalCaseDetailsPage = () => {
     }
   };
 
+  const initiateExam = async () => {
+    try {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      const timeStr = today.toTimeString().split(' ')[0].substring(0, 5);
+      await api.post('/clinical-examinations', {
+        caseId: parseInt(id),
+        examDate: dateStr,
+        examTime: timeStr,
+        patientConsent: false,
+        sexualAssault: false
+      });
+      window.location.reload();
+    } catch (err) {
+      alert("Failed to initiate examination. Ensure you are authorized.");
+    }
+  };
+
   if (loading) return <div className="p-8 text-slate-500">Loading clinical file...</div>;
   if (error || !caseInfo) return <div className="p-8 text-red-500">{error}</div>;
 
@@ -117,6 +144,7 @@ const ClinicalCaseDetailsPage = () => {
             {caseInfo.assigned_doctor_name && <span> • Assigned: Dr. {caseInfo.assigned_doctor_name}</span>}
           </p>
         </div>
+
         <div className="flex space-x-2">
           {exam && isDoctor && (
             <Link to={`/exam-injury?mlefId=${exam.mlef_id}`}
@@ -128,6 +156,7 @@ const ClinicalCaseDetailsPage = () => {
             <Link to={`/reports/generate/clinical/${exam.mlef_id}`}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm">
               View Report
+
             </Link>
           )}
         </div>
@@ -196,8 +225,24 @@ const ClinicalCaseDetailsPage = () => {
             </div>
           </div>
 
+
           {/* MLEF Creation Form (doctors only, no exam exists) */}
           {!exam && isDoctor && (
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
+              <h3 className="text-amber-800 font-bold mb-2">Examination Not Initiated</h3>
+              <p className="text-amber-700 text-sm mb-4">A doctor has not yet created the medical examination file for this case.</p>
+              {user.role === 'admin' || user.role === 'doctor' ? (
+                <button 
+                  onClick={initiateExam}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm"
+                >
+                  Initiate Examination Now
+                </button>
+              ) : null}
+            </div>
+          ) : (
+
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-blue-50 px-6 py-4 border-b border-blue-200">
                 <h3 className="font-semibold text-blue-900 flex items-center">

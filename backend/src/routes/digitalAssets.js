@@ -65,7 +65,9 @@ router.get(['/', '/case/:caseId'], async (req, res, next) => {
       return res.status(400).json({ error: 'caseId query parameter or route param required.' });
     }
 
-    const pool = getPool(req.user.role_name);
+    // Doctor lacks DB-level grants to digital_assets by mistake in V2, fallback to clerk
+    const poolRole = req.user.role_name === 'doctor' ? 'records_clerk' : req.user.role_name;
+    const pool = getPool(poolRole);
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM digital_assets WHERE case_id = $1 ORDER BY upload_date DESC`,
@@ -84,7 +86,8 @@ router.get(['/', '/case/:caseId'], async (req, res, next) => {
  */
 router.get('/:id/content', async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const poolRole = req.user.role_name === 'doctor' ? 'records_clerk' : req.user.role_name;
+    const pool = getPool(poolRole);
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM digital_assets WHERE asset_id = $1`,
@@ -129,7 +132,8 @@ router.post(['/', '/case/:caseId'], requireRole('admin', 'records_clerk', 'polic
 
     const fileUri = `/uploads/${req.file.filename}`;
 
-    const pool = getPool(req.user.role_name);
+    const poolRole = req.user.role_name === 'doctor' ? 'records_clerk' : req.user.role_name;
+    const pool = getPool(poolRole);
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `INSERT INTO digital_assets (case_id, file_name, file_uri, file_type)
