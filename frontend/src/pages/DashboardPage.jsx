@@ -5,15 +5,15 @@ import { Users, FileText, Bell, FlaskConical, AlertTriangle, ShieldCheck } from 
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  
+
   // Dashboard state
   const [stats, setStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  
+
   useEffect(() => {
     // Fetch notifications (All roles)
-    api.get('/notifications').then(res => setNotifications(res.data)).catch(() => {});
-    
+    api.get('/notifications').then(res => setNotifications(res.data)).catch(() => { });
+
     // Fetch aggregated role-specific dashboard statistics
     api.get('/statistics/dashboard')
       .then(res => setStats(res.data))
@@ -28,7 +28,7 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        
+
         {/* Administrator Widgets */}
         {user.role === 'admin' && (
           <>

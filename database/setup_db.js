@@ -74,7 +74,14 @@ async function main() {
     'V7__auth_migration.sql',
     'V8__reporting_views.sql',
     'V9__add_totp_secret.sql',
-    'V10__fix_audit_logs.sql'
+    'V10__fix_audit_logs.sql',
+    'V12__add_referral_source.sql',
+    'V13__add_pm_authorization_type.sql',
+    'V13__police_copy_function.sql',
+    'V14__police_patient_access.sql',
+    'V15__notifications_grants.sql',
+    'V16__court_patient_access.sql',
+    'V17__court_evidence_access.sql'
   ];
 
   for (const file of migrationFiles) {
@@ -148,3 +155,6 @@ main().catch(err => {
   console.error("Fatal setup error:", err);
   process.exit(1);
 });
+
+
+
