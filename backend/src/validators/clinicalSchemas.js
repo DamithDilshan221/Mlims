@@ -8,12 +8,14 @@ const { sanitizedString } = require('./commonSchemas');
 const referralCategoryEnum = z.enum([
   'trauma', 'domestic_abuse', 'sexual_abuse', 'child_abuse',
   'detainee', 'drug_addiction', 'age_estimation', 'dna_sample', 'other'
-]).optional().nullable();
+]).or(z.literal('')).optional().nullable();
+
+const emptyStrToUndef = (v) => v === '' || v === undefined || v === null ? undefined : v;
 
 const clinicalExamSchema = z.object({
   caseId: z.number().positive(),
   examDate: z.string().date(),
-  examTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM or HH:MM:SS"),
+  examTime: z.preprocess(emptyStrToUndef, z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM or HH:MM:SS").optional()),
   ward: sanitizedString.max(100).optional().nullable(),
   bhtNo: sanitizedString.max(50).optional().nullable(),
   dischargeDate: z.string().date().optional().nullable(),

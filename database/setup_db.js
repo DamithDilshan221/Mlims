@@ -7,7 +7,7 @@ const path = require('path');
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const pgPassword = process.argv[2] || process.env.PGPASSWORD || 'postgres';
+const pgPassword = process.argv[2] || process.env.PGPASSWORD || 'shashintha';
 const pgUser = process.env.PGUSER || 'postgres';
 const pgHost = process.env.PGHOST || 'localhost';
 const pgPort = parseInt(process.env.PGPORT || '5432', 10);
@@ -84,7 +84,11 @@ async function main() {
 
     'V17__fix_sp_register_case_permissions.sql',
     'V18__grant_police_stations_select_to_doctors.sql',
-    'V19__expand_mlef_form.sql'
+
+    'V19__expand_mlef_form.sql',
+    'V20__add_missing_staff_records.sql',
+    'V21__reapply_missing_grants.sql',
+    'V22__update_seed_mlef_data.sql'
 
   ];
 
@@ -128,18 +132,41 @@ async function main() {
     { roleId: 6, username: 'clerk', hash: hashClerk },
   ];
 
+  // Staff profiles to create for demo users (roleId → { first_name, last_name, designation, slmc_reg_no })
+  const demoStaffProfiles = {
+    1: { first_name: 'System',   last_name: 'Admin',     designation: 'System Administrator',         slmc_reg_no: null },
+    2: { first_name: 'Demo',     last_name: 'Doctor',    designation: 'Judicial Medical Officer',     slmc_reg_no: 'SLMC-DEMO-001' },
+    3: { first_name: 'Demo',     last_name: 'Forensic',  designation: 'Senior Lab Technician',        slmc_reg_no: 'SLMC-DEMO-002' },
+    6: { first_name: 'Demo',     last_name: 'Clerk',     designation: 'Records Clerk',                slmc_reg_no: 'SLMC-DEMO-003' },
+  };
+
   for (const u of demoUsers) {
     const res = await mlimsClient.query(`SELECT user_id FROM users WHERE username = $1`, [u.username]);
+    let userId;
     if (res.rows.length === 0) {
-      await mlimsClient.query(
-        `INSERT INTO users (role_id, username, password_hash, is_active) VALUES ($1, $2, $3, true)`,
+      const insertRes = await mlimsClient.query(
+        `INSERT INTO users (role_id, username, password_hash, is_active) VALUES ($1, $2, $3, true) RETURNING user_id`,
         [u.roleId, u.username, u.hash]
       );
+      userId = insertRes.rows[0].user_id;
     } else {
+      userId = res.rows[0].user_id;
       await mlimsClient.query(
         `UPDATE users SET password_hash = $1, is_active = true WHERE username = $2`,
         [u.hash, u.username]
       );
+    }
+    // Create staff record if this role needs one and no staff record exists yet
+    const profile = demoStaffProfiles[u.roleId];
+    if (profile) {
+      const existing = await mlimsClient.query(`SELECT staff_id FROM staff WHERE user_id = $1`, [userId]);
+      if (existing.rows.length === 0) {
+        await mlimsClient.query(
+          `INSERT INTO staff (user_id, first_name, last_name, designation, slmc_reg_no)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [userId, profile.first_name, profile.last_name, profile.designation, profile.slmc_reg_no]
+        );
+      }
     }
   }
 
