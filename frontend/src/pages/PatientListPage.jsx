@@ -75,11 +75,9 @@ const PatientListPage = () => {
                   <td className="px-6 py-4">{p.full_name}</td>
                   <td className="px-6 py-4">{p.age ?? '--'} / {p.gender}</td>
                   <td className="px-6 py-4">
-                    {p.nic_passport !== undefined ? p.nic_passport : (
-                      <RestrictedBadge allowedRoles={['admin', 'doctor', 'records_clerk']} fallback="Restricted (Public View)">
-                        {p.nic_passport}
-                      </RestrictedBadge>
-                    )}
+                    <RestrictedBadge allowedRoles={['admin', 'records_clerk', 'doctor', 'police', 'court']}>
+                      {p.nic_passport}
+                    </RestrictedBadge>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link to={`/patients/${p.patient_id}`} className="text-primary-600 hover:text-primary-800 font-medium">

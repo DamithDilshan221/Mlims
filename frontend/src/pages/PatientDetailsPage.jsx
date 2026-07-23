@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import RestrictedBadge from '../components/layout/RestrictedBadge';
+
 import { useAuth } from '../context/AuthContext';
 import { User, Activity, MapPin, Hash, FileText, ClipboardList, FileSignature } from 'lucide-react';
 
@@ -16,7 +17,7 @@ const PatientDetailsPage = () => {
   useEffect(() => {
     Promise.all([
       api.get(`/patients/${id}`),
-      api.get(`/cases?patientId=${id}`)
+      api.get(`/cases?patientId=${id}`).catch(() => ({ data: [] }))
     ])
       .then(([patientRes, casesRes]) => {
         setPatient(patientRes.data);
@@ -50,7 +51,7 @@ const PatientDetailsPage = () => {
                 {patient.nic_passport !== undefined ? (
                   patient.nic_passport || 'None'
                 ) : (
-                  <RestrictedBadge allowedRoles={['admin', 'doctor', 'records_clerk']} />
+                  <RestrictedBadge allowedRoles={['admin', 'doctor', 'records_clerk', 'police', 'court']} />
                 )}
               </span>
             </div>
@@ -60,7 +61,7 @@ const PatientDetailsPage = () => {
                 {patient.address !== undefined ? (
                   patient.address || 'No address on file'
                 ) : (
-                  <RestrictedBadge allowedRoles={['admin', 'doctor', 'records_clerk']} />
+                  <RestrictedBadge allowedRoles={['admin', 'doctor', 'records_clerk', 'police', 'court']} />
                 )}
               </span>
             </div>
@@ -75,9 +76,11 @@ const PatientDetailsPage = () => {
             <FileText className="w-5 h-5 mr-2 text-slate-500" />
             Linked Forensic Cases ({cases.length})
           </h3>
-          <Link to="/cases/new" className="text-xs font-semibold text-primary-600 hover:text-primary-800">
-            + New Case
-          </Link>
+          {['admin', 'records_clerk', 'police'].includes(user.role) && (
+            <Link to="/cases/new" className="text-xs font-semibold text-primary-600 hover:text-primary-800">
+              + New Case
+            </Link>
+          )}
         </div>
         <div className="divide-y divide-slate-100">
           {cases.length === 0 ? (

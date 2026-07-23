@@ -82,6 +82,7 @@ async function main() {
     'V15__add_assigned_doctor_to_case.sql',
     'V16__catchup_missing_migrations.sql',
     'V17__fix_sp_register_case_permissions.sql'
+
   ];
 
   for (const file of migrationFiles) {
@@ -155,3 +156,6 @@ main().catch(err => {
   console.error("Fatal setup error:", err);
   process.exit(1);
 });
+
+
+
