@@ -42,7 +42,7 @@ const NAV_SECTIONS = [
     roles: ['admin', 'police', 'doctor', 'court'],
     items: [
       { label: 'Police Hub', path: '/police-hub', icon: Shield },
-      { label: 'New Case', path: '/cases/new', icon: Plus },
+      { label: 'New Case', path: '/cases/new', icon: Plus, roles: ['admin', 'police', 'court'] },
     ],
   },
   {

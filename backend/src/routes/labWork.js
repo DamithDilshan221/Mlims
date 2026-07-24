@@ -79,7 +79,7 @@ router.get('/requests/:id', validateParams(idParam), async (req, res, next) => {
  */
 router.post('/', requireRole('admin', 'forensic_staff', 'doctor'), validateBody(labRequestSchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const reqRecord = await repo.createRequest(client, req.body);
       res.status(201).json(reqRecord);
@@ -91,7 +91,7 @@ router.post('/', requireRole('admin', 'forensic_staff', 'doctor'), validateBody(
 
 router.post('/requests', requireRole('admin', 'forensic_staff', 'doctor'), validateBody(labRequestSchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const reqRecord = await repo.createRequest(client, req.body);
       res.status(201).json(reqRecord);
@@ -154,7 +154,7 @@ router.get('/requests/:id/result', validateParams(idParam), async (req, res, nex
  */
 router.post('/requests/:id/finalize', requireRole('admin', 'forensic_staff'), validateParams(idParam), validateBody(labResultFinalizeSchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     const { findings, diagnosis, documentUri } = req.body;
     
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
