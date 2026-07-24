@@ -189,7 +189,7 @@ BEGIN
     FROM pending_court pc
     JOIN staff s ON pc.doctor_id = s.staff_id
     WHERE s.user_id IS NOT NULL
-    RETURNING notification_id, user_id, subject, message;
+    RETURNING notifications.notification_id, notifications.user_id, notifications.subject, notifications.message;
 
     -- b) Unissued MLRs (clinical exam created > 14 days ago with no MLR)
     RETURN QUERY
@@ -217,7 +217,7 @@ BEGIN
     FROM unissued_mlr um
     JOIN staff s ON um.doctor_id = s.staff_id
     WHERE s.user_id IS NOT NULL
-    RETURNING notification_id, user_id, subject, message;
+    RETURNING notifications.notification_id, notifications.user_id, notifications.subject, notifications.message;
 
     -- c) Unissued Causes of Death (PM created > 14 days ago with no COD)
     RETURN QUERY
@@ -245,7 +245,7 @@ BEGIN
     FROM unissued_cod uc
     JOIN staff s ON uc.doctor_id = s.staff_id
     WHERE s.user_id IS NOT NULL
-    RETURNING notification_id, user_id, subject, message;
+    RETURNING notifications.notification_id, notifications.user_id, notifications.subject, notifications.message;
 END;
 $$;
 
@@ -292,6 +292,7 @@ GRANT INSERT(authorization_type), UPDATE(authorization_type) ON clinical_examina
 -- ============================================================================
 
 GRANT SELECT ON v_pm_registry TO admin_role, doctor_role, police_role, court_role, records_clerk_role, auditor_role;
+GRANT SELECT ON v_audit_log_detailed, audit_logs TO admin_role, auditor_role;
 GRANT EXECUTE ON FUNCTION fn_generate_pending_notifications() TO admin_role;
 
 -- ============================================================================
