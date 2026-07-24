@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, FlaskConical, ChevronRight, X, FileText, AlertCirc
 import LabRequestModal from '../components/modals/LabRequestModal';
 
 const LabTestPage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const toast = useToast();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,14 @@ const LabTestPage = () => {
       setRequests(res.data);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch lab requests. Please ensure you have the necessary permissions.");
+      if (err.response?.status === 401) {
+        // Unauthorized – likely missing permissions or session expired
+        toast.error('Session expired. Redirecting to login...');
+        logout();
+      } else {
+        setError('Failed to fetch lab requests. Please ensure you have the necessary permissions.');
+        toast.error(err.response?.data?.error || 'Failed to load lab requests.');
+      }
     } finally {
       setLoading(false);
     }
