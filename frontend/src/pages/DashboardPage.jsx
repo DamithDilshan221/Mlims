@@ -43,7 +43,7 @@ const DashboardPage = () => {
         setLabRequests(res.data.slice(0, 5));
       }).catch(() => {});
     }
-  }, [user.role, user.staff_id]);
+  }, [user?.role, user?.staffId]);
 
   
 

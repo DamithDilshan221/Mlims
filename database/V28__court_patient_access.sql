@@ -1,5 +1,5 @@
 -- ============================================================================
--- MLIMS Phase 7: Court & Police Patient Access (V16)
+-- MLIMS: Court & Police Patient Access (V28)
 --
 -- Grants the court and police roles access to view full patient PII.
 -- ============================================================================

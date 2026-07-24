@@ -371,7 +371,7 @@ const EscalationTab = ({ data, loading }) => (
                   </div>
                 </div>
               </div>
-              <Link to={`/cases/${item.case_id}`} className="text-xs text-blue-600 hover:underline font-medium flex-shrink-0">View Case</Link>
+              <Link to={`/cases/${item.case_type}/${item.case_id}`} className="text-xs text-blue-600 hover:underline font-medium flex-shrink-0">View Case</Link>
             </div>
           </div>
         ))}

@@ -80,7 +80,7 @@ SELECT
 FROM staff s
 JOIN users u ON s.user_id = u.user_id
 JOIN roles r ON u.role_id = r.role_id
-WHERE r.role_name = 'doctor_role';
+WHERE r.role_name = 'doctor';
 
 GRANT SELECT ON v_report_doctor_caseload TO admin_role, auditor_role;
 

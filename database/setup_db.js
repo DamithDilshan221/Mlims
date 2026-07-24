@@ -91,7 +91,12 @@ async function main() {
     'V22__update_seed_mlef_data.sql',
     'V23__enhance_court_role_grants.sql',
     'V24__police_inquest_module.sql',
-    'V25__fix_missing_role_grants.sql'
+    'V25__fix_missing_role_grants.sql',
+    'V26__police_copy_function.sql',
+    'V27__notifications_grants.sql',
+    'V28__court_patient_access.sql',
+    'V29__court_evidence_access.sql',
+    'V30__police_patient_registration.sql'
 
   ];
 

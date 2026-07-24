@@ -73,10 +73,10 @@ router.get('/:id', validateParams(idParam), async (req, res, next) => {
 
 /**
  * POST /patients
- * Create patient (admin, records_clerk). 
- * Doctor gets read-only via RLS/views, doesn't create patients directly.
+ * Create patient (admin, records_clerk, police).
+ * Police can register a missing patient as part of case intake; doctors remain read-only.
  */
-router.post('/', requireRole('admin', 'records_clerk'), validateBody(patientSchema), async (req, res, next) => {
+router.post('/', requireRole('admin', 'records_clerk', 'police'), validateBody(patientSchema), async (req, res, next) => {
   try {
     const pool = getPool(req.user.role_name);
     const data = req.body;

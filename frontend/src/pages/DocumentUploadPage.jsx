@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
-import { UploadCloud, File, X } from 'lucide-react';
+import { UploadCloud, File, Image, X } from 'lucide-react';
 
 const DocumentUploadPage = () => {
   const { id: caseId } = useParams();
@@ -78,7 +78,7 @@ const DocumentUploadPage = () => {
 
   const getFileIcon = (fileName) => {
     const ext = fileName.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png'].includes(ext)) return <ImageIcon className="w-8 h-8 text-blue-500" />;
+    if (['jpg', 'jpeg', 'png'].includes(ext)) return <Image className="w-8 h-8 text-blue-500" />;
     return <File className="w-8 h-8 text-red-500" />;
   };
 

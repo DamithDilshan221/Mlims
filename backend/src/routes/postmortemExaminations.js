@@ -58,6 +58,9 @@ router.post('/', validateBody(postmortemExamSchema), async (req, res, next) => {
       res.status(201).json(exam);
     });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A postmortem examination has already been initiated for this case.' });
+    }
     next(err);
   }
 });
