@@ -56,9 +56,8 @@ const NAV_SECTIONS = [
   },
   {
     label: 'Reports',
-    roles: ['admin', 'doctor', 'auditor', 'police', 'court'],
+    roles: ['admin', 'auditor', 'court'],
     items: [
-      { label: 'Report Hub', path: '/reports/dashboard', icon: FileText },
       { label: 'Daily Case Report', path: '/reports/daily', icon: CalendarDays },
       { label: 'Monthly Report', path: '/reports/monthly', icon: BarChart3 },
       { label: 'Pending Tracker', path: '/reports/pending', icon: AlertTriangle },

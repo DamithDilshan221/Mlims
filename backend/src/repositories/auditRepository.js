@@ -11,32 +11,46 @@
  * (user_id, changed_at) from Phase 1.
  */
 async function listPaginated(client, { userId, table, action, startDate, endDate, limit = 50, offset = 0 } = {}) {
-  let sql = `SELECT * FROM v_audit_log_detailed WHERE 1=1`;
+  let sql = `
+    SELECT 
+      al.log_id,
+      al.user_id,
+      u.username,
+      al.table_name,
+      al.record_id,
+      al.action_type,
+      al.changed_at,
+      al.old_payload,
+      al.new_payload
+    FROM audit_logs al
+    LEFT JOIN users u ON al.user_id = u.user_id
+    WHERE 1=1
+  `;
   const params = [];
   let idx = 1;
 
   if (userId) {
-    sql += ` AND user_id = $${idx++}`;
+    sql += ` AND al.user_id = $${idx++}`;
     params.push(userId);
   }
   if (table) {
-    sql += ` AND table_name ILIKE $${idx++}`;
+    sql += ` AND al.table_name ILIKE $${idx++}`;
     params.push(`%${table}%`);
   }
   if (action) {
-    sql += ` AND action_type = $${idx++}`;
+    sql += ` AND al.action_type = $${idx++}`;
     params.push(action);
   }
   if (startDate) {
-    sql += ` AND changed_at >= $${idx++}`;
+    sql += ` AND al.changed_at >= $${idx++}`;
     params.push(startDate);
   }
   if (endDate) {
-    sql += ` AND changed_at <= $${idx++}`;
+    sql += ` AND al.changed_at <= $${idx++}`;
     params.push(endDate);
   }
 
-  sql += ` ORDER BY changed_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+  sql += ` ORDER BY al.changed_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
   params.push(limit, offset);
 
   const { rows } = await client.query(sql, params);

@@ -122,12 +122,12 @@ function App() {
       <Route path="/police-hub/handovers" element={<ProtectedRoute><PoliceHubPage /></ProtectedRoute>} />
 
       {/* Reports Module */}
-      <Route path="/reports/dashboard" element={<ProtectedRoute><ReportsIndexPage /></ProtectedRoute>} />
-      <Route path="/reports/daily" element={<ProtectedRoute><ReportDailyPage /></ProtectedRoute>} />
-      <Route path="/reports/monthly" element={<ProtectedRoute><ReportMonthlyPage /></ProtectedRoute>} />
-      <Route path="/reports/pending" element={<ProtectedRoute><ReportPendingPage /></ProtectedRoute>} />
-      <Route path="/reports/court" element={<ProtectedRoute><ReportCourtPage /></ProtectedRoute>} />
-      <Route path="/reports/statistical" element={<ProtectedRoute><ReportStatisticalPage /></ProtectedRoute>} />
+      <Route path="/reports/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportsIndexPage /></ProtectedRoute>} />
+      <Route path="/reports/daily" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportDailyPage /></ProtectedRoute>} />
+      <Route path="/reports/monthly" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportMonthlyPage /></ProtectedRoute>} />
+      <Route path="/reports/pending" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportPendingPage /></ProtectedRoute>} />
+      <Route path="/reports/court" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportCourtPage /></ProtectedRoute>} />
+      <Route path="/reports/statistical" element={<ProtectedRoute allowedRoles={['admin', 'auditor', 'court']}><ReportStatisticalPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
