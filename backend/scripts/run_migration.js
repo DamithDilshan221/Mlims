@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 const fs = require('fs');
-const pgPassword = process.argv[2] || '1234';
-const pgUser = process.argv[3] || 'demo_admin';
+const pgPassword = process.argv[2] || process.env.PGPASSWORD || '1234';
+const pgUser = process.argv[3] || process.env.PGUSER || 'demo_admin';
 const migrationFile = process.argv[4];
 async function main() {
   const client = new Client({ host:'localhost', port:5432, user:pgUser, password:pgPassword, database:'mlims' });

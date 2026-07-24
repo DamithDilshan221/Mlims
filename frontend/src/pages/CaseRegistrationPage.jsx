@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Stethoscope } from 'lucide-react';
 
 const CaseRegistrationPage = () => {
@@ -35,12 +35,23 @@ const CaseRegistrationPage = () => {
         setStations(stationsRes.data);
         setReferralSources(sourcesRes.data);
         setDoctors(doctorsRes.data);
-        if (stationsRes.data.length > 0) {
-          setStationSearch(stationsRes.data[0].station_name);
+        
+        const savedStationId = localStorage.getItem('lastSelectedStationId');
+        let initialStationId = '';
+        let initialStationName = '';
+
+        if (savedStationId && stationsRes.data.some(s => s.station_id.toString() === savedStationId)) {
+          initialStationId = parseInt(savedStationId, 10);
+          initialStationName = stationsRes.data.find(s => s.station_id === initialStationId).station_name;
+        } else if (stationsRes.data.length > 0) {
+          initialStationId = stationsRes.data[0].station_id;
+          initialStationName = stationsRes.data[0].station_name;
         }
+
+        setStationSearch(initialStationName);
         setFormData(prev => ({ 
           ...prev, 
-          stationId: stationsRes.data.length > 0 ? stationsRes.data[0].station_id : '',
+          stationId: initialStationId,
           referralSourceId: sourcesRes.data.length > 0 ? sourcesRes.data[0].source_id : ''
         }));
       } catch (_) { }
@@ -171,7 +182,7 @@ const CaseRegistrationPage = () => {
                 placeholder="e.g. 1"
               />
               <p className="text-xs text-slate-400 mt-1">
-                If patient does not exist, <a href="/patients/new" className="text-primary-600 hover:underline font-medium">register them first</a>.
+                If patient does not exist, <Link to="/patients/new" className="text-primary-600 hover:underline font-medium">register them first</Link>.
               </p>
             </div>
 
@@ -201,6 +212,7 @@ const CaseRegistrationPage = () => {
                         onMouseDown={() => {
                           setStationSearch(s.station_name);
                           setFormData({...formData, stationId: s.station_id});
+                          localStorage.setItem('lastSelectedStationId', s.station_id.toString());
                           setShowStations(false);
                         }}
                       >

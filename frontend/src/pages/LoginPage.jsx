@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+
+import { Lock, AlertCircle, CheckCircle2, Shield as ShieldIcon } from 'lucide-react';
+import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { Shield, AlertCircle, ArrowLeft, Lock, User, Eye, EyeOff } from 'lucide-react';
+
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -142,4 +146,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+
+};
+
+export default LoginPage;
+

@@ -58,7 +58,7 @@ router.get(['/audit-log', '/audit-logs'], requireRole('admin', 'auditor'), valid
  */
 router.get('/notifications', async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT * FROM notifications WHERE user_id = $1 ORDER BY notification_id DESC`,
@@ -77,7 +77,7 @@ router.get('/notifications', async (req, res, next) => {
  */
 router.patch('/notifications/:id/read', validateParams(idParam), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `UPDATE notifications SET is_read = TRUE WHERE notification_id = $1 AND user_id = $2 RETURNING *`,

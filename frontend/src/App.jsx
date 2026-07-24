@@ -69,7 +69,7 @@ function App() {
       {/* Patients */}
       <Route path="/patients" element={<ProtectedRoute><PatientListPage /></ProtectedRoute>} />
       <Route path="/patients/new" element={
-        <ProtectedRoute allowedRoles={['admin', 'records_clerk', 'doctor']}>
+        <ProtectedRoute allowedRoles={['admin', 'records_clerk', 'doctor', 'police']}>
           <PatientRegistrationPage />
         </ProtectedRoute>
       } />

@@ -23,7 +23,7 @@ router.use(authenticate);
  */
 router.get('/', validateQuery(labRequestQuerySchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const requests = await repo.listRequests(client, req.query);
       res.json(requests);
@@ -35,7 +35,7 @@ router.get('/', validateQuery(labRequestQuerySchema), async (req, res, next) => 
 
 router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const requests = await repo.listRequests(client, req.query);
       res.json(requests);
@@ -50,7 +50,7 @@ router.get('/requests', validateQuery(labRequestQuerySchema), async (req, res, n
  */
 router.get('/:id', validateParams(idParam), async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const request = await repo.getRequestById(client, req.params.id);
       if (!request) return res.status(404).json({ error: 'Request not found' });

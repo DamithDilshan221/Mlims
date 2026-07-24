@@ -1,5 +1,5 @@
 -- ============================================================================
--- MLIMS Phase 7: Notifications Grants (V15)
+-- MLIMS: Notifications Grants (V27)
 --
 -- Grants access to the notifications table for all non-admin roles so they
 -- can fetch and mark their own notifications as read.

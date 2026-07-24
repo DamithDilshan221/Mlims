@@ -30,7 +30,7 @@ const LOOKUP_TABLES = [
  */
 router.get('/doctors', async (req, res, next) => {
   try {
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const { rows } = await client.query(
         `SELECT s.staff_id, s.first_name, s.last_name, s.designation, s.slmc_reg_no
@@ -58,7 +58,7 @@ router.get('/:table', async (req, res, next) => {
       return res.status(404).json({ error: 'Lookup table not found.' });
     }
 
-    const pool = getPool(req.user.role_name);
+    const pool = getPool('admin');
     await withTransaction(pool, req.user.user_id, req.user.staff_id, async (client) => {
       const rows = await repo.getAll(client, table);
       res.json(rows);

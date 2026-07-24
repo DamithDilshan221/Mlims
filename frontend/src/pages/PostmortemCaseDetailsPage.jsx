@@ -4,7 +4,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
-import { BookOpen, UserMinus, UploadCloud, UserCheck, Activity } from 'lucide-react';
+import { BookOpen, UserMinus, UploadCloud, UserCheck, Activity, File } from 'lucide-react';
 import CaseDocumentsWidget from '../components/documents/CaseDocumentsWidget';
 
 
